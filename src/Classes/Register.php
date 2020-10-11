@@ -102,7 +102,7 @@ class Register extends \Module
 		/*****************************************
 		*** Zählung des Artikels (tl_article) ****
 		******************************************/
-		$id_article = Input::get('articles');
+		$id_article = \Input::get('articles');
 		$objArticleModel = \ArticleModel::findByIdOrAlias($id_article);
 		$id_article = $objArticleModel->id;
 		if($id_article) $this->RegisterCounter($id_article, 'tl_article', $this->fhc_register_articles);
