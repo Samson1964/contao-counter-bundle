@@ -80,23 +80,26 @@ class Register extends \Module
 		$this->be_user = false;
 		if(!$this->fhc_register_be_user)
 		{
-			// BE-Benutzer soll nicht mitgezählt werden, deshalb Session-ID prüfen
-			$objSession = $this->Database->prepare('SELECT * FROM tl_session WHERE name=? AND sessionID=?')->execute('BE_USER_AUTH', session_id()); 
-			if($objSession->name == 'BE_USER_AUTH')
+			// BE-Benutzer soll nicht mitgezählt werden
+			$objUser = \BackendUser::getInstance();
+			if($objUser->username)
 			{
 				// BE-Benutzer ist eingeloggt, deshalb Zählung deaktivieren
 				$this->fhc_register_pages = false;
 				$this->fhc_register_articles = false;
 				$this->fhc_register_news = false;
 				$this->be_user = true;
-				//echo "BE eingeloggt";
 			}
-			//else echo "BE nicht eingeloggt";
 		}
 
 		/*****************************************
 		****** Zählung der Seite (tl_page) *******
 		******************************************/
+		if($objPage->type == 'error_404')
+		{
+			// Log-Eintrag machen, da Seite nicht gefunden wurde
+			\System::log('Fehler 404: '.$_SERVER['HTTP_REFERER'], __CLASS__.'::'.__FUNCTION__, TL_ERROR);
+		}
 		$this->RegisterCounter($objPage->id, 'tl_page', $this->fhc_register_pages);
 
 		/*****************************************
