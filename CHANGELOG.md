@@ -1,5 +1,11 @@
 # Counter Changelog
 
+## Version 1.0.1 (2020-10-22)
+
+* Fix: Leere Referer bei 404-Fehlern nicht mitloggen
+* Fix: Umstellung von HTTP_REFERER (da dort nichts Aussagekräftiges drinsteht) auf REQUEST_URI
+* Change: Ausgabe in tl_log erweitert auf REMOTE_ADDR und HTTP_USER_AGENT
+
 ## Version 1.0.0 (2020-10-21)
 
 * Add: Eintrag in tl_log, wenn 404-Seite aufgerufen wurde
