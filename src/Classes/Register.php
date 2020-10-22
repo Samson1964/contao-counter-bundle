@@ -95,16 +95,13 @@ class Register extends \Module
 		/*****************************************
 		****** Zählung der Seite (tl_page) *******
 		******************************************/
-		echo "<pre>";
-		print_r($_SERVER);
-		echo "</pre>";
 		if($objPage->type == 'error_404' && $_SERVER['REQUEST_URI'])
 		{
-			$log = 'URL='.$_SERVER['REQUEST_URI'];
+			$log = $_SERVER['REQUEST_URI'];
 			$log .= ' --- IP='.$_SERVER['REMOTE_ADDR'];
 			$log .= ' --- AGENT='.$_SERVER['HTTP_USER_AGENT'];
 			// Log-Eintrag machen, da Seite nicht gefunden wurde und Referer vorhanden ist
-			\System::log('Fehler 404 '.$log, __CLASS__.'::'.__FUNCTION__, TL_ERROR);
+			\System::log('Fehler 404: '.$log, __CLASS__.'::'.__FUNCTION__, TL_ERROR);
 		}
 		$this->RegisterCounter($objPage->id, 'tl_page', $this->fhc_register_pages);
 

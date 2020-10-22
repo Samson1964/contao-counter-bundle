@@ -1,5 +1,9 @@
 # Counter Changelog
 
+## Version 1.0.2 (2020-10-22)
+
+* Fix: Debug-Ausgabe entfernt
+
 ## Version 1.0.1 (2020-10-22)
 
 * Fix: Leere Referer bei 404-Fehlern nicht mitloggen
