@@ -380,7 +380,7 @@ class Tag extends \Frontend
 	public function fhcounter($strTag)
 	{
 		$arrSplit = explode('::', $strTag);
-
+		echo "fhcounter"
 		if($arrSplit[0] == 'fhcounter' || $arrSplit[0] == 'cache_fhcounter')
 		{
 			global $objPage;
@@ -398,19 +398,23 @@ class Tag extends \Frontend
 			$gjahr = date("Y",$gestern); // Jahr vierstellig
 			$gmonat = date("n",$gestern); // Monat einstellig
 			$gtag = date("j",$gestern);	// Tag einstellig
-	
-			// BE-Benutzer soll nicht mitgezählt werden, deshalb Session-ID prüfen
-			$objSession = $this->Database->prepare('SELECT * FROM tl_session WHERE name=? AND sessionID=?')->execute('BE_USER_AUTH', session_id()); 
-			if($objSession->name == 'BE_USER_AUTH')
+
+			// Zählstatus anpassen, je nachdem ob BE-Benutzer gezählt werden oder nicht
+			$this->be_user = false;
+			if(!$this->fhc_register_be_user)
 			{
-				// BE-Benutzer ist eingeloggt, deshalb Zählung deaktivieren
-				$this->fhc_register_pages = false;
-				$this->fhc_register_articles = false;
-				$this->fhc_register_news = false;
-				$this->be_user = true;
-				//echo "BE eingeloggt";
+				// BE-Benutzer soll nicht mitgezählt werden
+				$objUser = \BackendUser::getInstance();
+				if($objUser->username)
+				{
+					// BE-Benutzer ist eingeloggt, deshalb Zählung deaktivieren
+					$this->fhc_register_pages = false;
+					$this->fhc_register_articles = false;
+					$this->fhc_register_news = false;
+					$this->be_user = true;
+				}
 			}
-	
+
 			/*****************************************
 			****** Zählung der Seite (tl_page) *******
 			******************************************/
@@ -472,6 +476,7 @@ class Tag extends \Frontend
 	 */
 	protected function RegisterCounter($source_id, $source_name, $source_register)
 	{
+
 		// Zählwerk nur arbeiten lassen, wenn die ID nicht false oder 0 ist
 		if($source_id)
 		{

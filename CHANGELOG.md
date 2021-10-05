@@ -1,5 +1,9 @@
 # Counter Changelog
 
+## Version 1.0.3 (2021-10-05)
+
+* Fix: Tag.php Abhängigkeit tl_session entfernt
+
 ## Version 1.0.2 (2020-10-22)
 
 * Fix: Debug-Ausgabe entfernt
