@@ -11,7 +11,7 @@
  * @copyright Frank Hoppe 2014
  */
 
-namespace Schachbulle\ContaoCounterBundle\Classes; 
+namespace Schachbulle\ContaoCounterBundle\Classes;
 
 class Tag extends \Frontend
 {
@@ -24,13 +24,13 @@ class Tag extends \Frontend
 
 	var $fhc_register_pages = true;
 	var $fhc_register_articles = true;
-	var $fhc_register_news = true;             
-	
-	var $fhc_onlinetime = 180;  
+	var $fhc_register_news = true;
+
+	var $fhc_onlinetime = 180;
 	var $fhc_registernewtime = 600;
-	
+
 	// Backend-Status
-	var $be_user = false;       
+	var $be_user = false;
 
 	var $fhc_template = 'fhcounter_mini';
 	var $fhc_view_pages = true;
@@ -60,10 +60,10 @@ class Tag extends \Frontend
 			$gtag = date("j",$gestern);	// Tag einstellig
 			// Vormonat ermitteln und in Array ablegen
 			$vormonat = explode(".", date("Y.n", strtotime("last month", $this->zeit)));
-	
+
 			// Template-Objekt anlegen
 			$this->Template = new \FrontendTemplate($this->fhc_template);
-	
+
 			// Ausgabeoptionen dem Template zuweisen
 			$this->Template->ViewPages = $this->fhc_view_pages;
 			$this->Template->ViewArticles = $this->fhc_view_articles;
@@ -74,7 +74,7 @@ class Tag extends \Frontend
 			$this->Template->ViewDiagrams = $this->fhc_view_diagrams;
 			$this->Template->ViewTables = $this->fhc_view_tables;
 			$debuginfo = array();
-	
+
 			// Zählerwerte tl_page in das Template schreiben
 			if($GLOBALS['fhcounter']['tl_page'] && $this->Template->ViewPages)
 			{
@@ -108,7 +108,7 @@ class Tag extends \Frontend
 				// Kein Zähler vorhanden, dann Ausgabe unterdrücken
 				$this->Template->ViewPages = false;
 			}
-	
+
 			// Zählerwerte tl_article in das Template schreiben
 			if($GLOBALS['fhcounter']['tl_article'] && $this->Template->ViewArticles)
 			{
@@ -142,7 +142,7 @@ class Tag extends \Frontend
 				// Kein Zähler vorhanden, dann Ausgabe unterdrücken
 				$this->Template->ViewArticles = false;
 			}
-	
+
 			// Zählerwerte tl_news in das Template schreiben
 			if($GLOBALS['fhcounter']['tl_news'] && $this->Template->ViewNews)
 			{
@@ -176,7 +176,7 @@ class Tag extends \Frontend
 				// Kein Zähler vorhanden, dann Ausgabe unterdrücken
 				$this->Template->ViewNews = false;
 			}
-	
+
 			// Zählerwerte default in das Template schreiben
 			if($GLOBALS['fhcounter']['default'] && $this->Template->ViewDefault)
 			{
@@ -209,7 +209,7 @@ class Tag extends \Frontend
 				// Kein Zähler vorhanden, dann Ausgabe unterdrücken
 				$this->Template->ViewDefault = false;
 			}
-	
+
 			// Template-Variablen ggfs. Tausender-Trennzeichen hinzufügen
 			if($this->fhc_1000_separator)
 			{
@@ -274,7 +274,7 @@ class Tag extends \Frontend
 					$this->Template->NewsCounterAverage = number_format($this->Template->NewsCounterAverage,0,",",".");
 				}
 			}
-	
+
 			// Debuginfos ergänzen
 			if($this->Template->ViewDebuginfo)
 			{
@@ -303,7 +303,7 @@ class Tag extends \Frontend
 				$debuginfo['tl_article']['Topbesucher gleichzeitig'] = $GLOBALS['fhcounter']['tl_article']['toponline']['count'] . " am " . date("d.m.Y H:i:s", $GLOBALS['fhcounter']['tl_article']['toponline']['time']);
 				$this->Template->Debuginfo = $debuginfo;
 			}
-	
+
 			if($this->Template->ViewDiagrams)
 			{
 				// Letzte 24 Stunden ausgeben
@@ -328,7 +328,7 @@ class Tag extends \Frontend
 				$this->Template->CounterHoursData = '['.implode(', ',$values).']';
 				$this->Template->CounterHoursTicks = '['.implode(', ',$ticks).']';
 				$this->Template->CounterHoursValues = $nr;
-	
+
 				// Letzte 30 Tage ausgeben
 				$nr = 0; $values = array(); $ticks = array();
 				for($x = 29; $x >= 0; $x--)
@@ -350,7 +350,7 @@ class Tag extends \Frontend
 				$this->Template->CounterDaysData = '['.implode(', ',$values).']';
 				$this->Template->CounterDaysTicks = '['.implode(', ',$ticks).']';
 				$this->Template->CounterDaysValues = $nr;
-	
+
 				// Letzte 12 Monate ausgeben
 				$nr = 0; $values = array(); $ticks = array();
 				$monatsanfang = mktime(0,0,0,$this->monat,1,$this->jahr); // 1. Tag des aktuellen Monats als Start
@@ -380,13 +380,12 @@ class Tag extends \Frontend
 	public function fhcounter($strTag)
 	{
 		$arrSplit = explode('::', $strTag);
-		echo "fhcounter"
 		if($arrSplit[0] == 'fhcounter' || $arrSplit[0] == 'cache_fhcounter')
 		{
 			global $objPage;
-	
+
 			$this->ip = $_SERVER['REMOTE_ADDR']; // IP-Adresse des aktuellen Benutzers
-	
+
 			// Aktuelle Zeitwerte zuweisen
 			$this->zeit = time();
 			$this->jahr = date("Y",$this->zeit); // Jahr vierstellig
@@ -419,7 +418,7 @@ class Tag extends \Frontend
 			****** Zählung der Seite (tl_page) *******
 			******************************************/
 			$this->RegisterCounter($objPage->id, 'tl_page', $this->fhc_register_pages);
-	
+
 			/*****************************************
 			*** Zählung des Artikels (tl_article) ****
 			******************************************/
@@ -427,11 +426,11 @@ class Tag extends \Frontend
 			$objArticleModel = \ArticleModel::findByIdOrAlias($id_article);
 			$id_article = $objArticleModel->id;
 			if($id_article) $this->RegisterCounter($id_article, 'tl_article', $this->fhc_register_articles);
-	
+
 			/*****************************************
 			*** Zählung der Nachricht (tl_news) ******
 			******************************************/
-	
+
 			$objNews = $this->Database->prepare('SELECT * FROM tl_news_archive')->execute();
 			$nachrichtenleser = array();
 			while($objNews->next())
@@ -457,7 +456,7 @@ class Tag extends \Frontend
 					$objNews = $this->Database->prepare('SELECT * FROM tl_news WHERE alias=?')->execute($newsalias);
 					$this->RegisterCounter($objNews->id, 'tl_news', $this->fhc_register_news);
 				}
-			}          
+			}
 			//print_r($GLOBALS['fhcounter']);
 			return "";
 		}
