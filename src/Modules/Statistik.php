@@ -183,11 +183,11 @@ class Statistik
 		{
 			return $zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all'];
 		}
-		elseif($datum[0] && $datum[1] && $zaehlerdaten[$datum[0]][$datum[1]]['all'])
+		elseif($datum[0] && $datum[1] && !$datum[2] && $zaehlerdaten[$datum[0]][$datum[1]]['all'])
 		{
 			return $zaehlerdaten[$datum[0]][$datum[1]]['all'];
 		}
-		elseif($datum[0] && $zaehlerdaten[$datum[0]]['all'])
+		elseif($datum[0] && !$datum[1] && !$datum[2] && $zaehlerdaten[$datum[0]]['all'])
 		{
 			return $zaehlerdaten[$datum[0]]['all'];
 		}
@@ -199,7 +199,7 @@ class Statistik
 
 	/**
 	 * Funktion Archive
-	 * Liefert ein Array mit der Archiv-ID als Schlüssel und dem Archiv-Zitel als Wert
+	 * Liefert ein Array mit der Archiv-ID als Schlüssel und dem Archiv-Titel als Wert
 	 * @return array
 	 */
 	private function Archive()

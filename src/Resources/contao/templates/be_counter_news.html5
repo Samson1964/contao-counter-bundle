@@ -22,20 +22,18 @@
 	<tbody>
 		<tr>
 			<th class="tl_folder_tlist">Platz</th>
-			<th class="tl_folder_tlist">Titel</th>
-			<th class="tl_folder_tlist">Datum</th>
-			<th class="tl_folder_tlist">Alias</th>
-			<th class="tl_folder_tlist">Aufrufe</th>
+			<th class="tl_folder_tlist">Zugriffe</th>
+			<th class="tl_folder_tlist">Nachricht</th>
 			<th class="tl_folder_tlist">Archiv</th>
+			<th class="tl_folder_tlist">Veröffentlicht</th>
 		</tr>
 		<?php foreach ($this->daten as $item): ?>
 			<tr class="<?= $item['css'] ?> click2edit toggle_select hover-row">
 				<td class="tl_file_list"><?= $item['platz'] ?></td>
-				<td class="tl_file_list"><?= $item['titel'] ?></td>
-				<td class="tl_file_list"><?= $item['datum'] ?></td>
-				<td class="tl_file_list"><?= $item['alias'] ?></td>
 				<td class="tl_file_list"><?= $item['hits'] ?></td>
+				<td class="tl_file_list"><?= $item['titel'] ?></td>
 				<td class="tl_file_list"><?= $item['archiv'] ?></td>
+				<td class="tl_file_list"><?= $item['datum'] ?></td>
 			</tr>
 		<?php endforeach; ?>
 	</tbody>

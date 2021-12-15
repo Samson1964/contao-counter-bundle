@@ -1,5 +1,10 @@
 # Counter Changelog
 
+## Version 1.1.1 (2021-12-15)
+
+* Change: Umstrukturierung der Top-Tabelle, z.B. ohne Alias
+* Fix: Tageszähler arbeitete falsch - hat die Monate und Jahre addiert
+
 ## Version 1.1.0 (2021-12-15)
 
 * Add: Backend-Ausgabe der Nachrichten-Statistik
