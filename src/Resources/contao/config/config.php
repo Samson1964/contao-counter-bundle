@@ -20,3 +20,8 @@ $GLOBALS['FE_MOD']['fhcounter'] = array
 $GLOBALS['TL_HOOKS']['replaceInsertTags'][] = array('Schachbulle\ContaoCounterBundle\Classes\Tag', 'fhcounter');
 $GLOBALS['TL_HOOKS']['replaceInsertTags'][] = array('Schachbulle\ContaoCounterBundle\Classes\Tag', 'fhcounter_view');
 
+// Backend-Module der Nachrichten erweitern
+$GLOBALS['BE_MOD']['content']['news']['counter'] = array
+(
+	'Schachbulle\ContaoCounterBundle\Modules\Statistik', 'NewsStatistik'
+);

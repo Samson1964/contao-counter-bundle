@@ -1,0 +1,50 @@
+<div class="tl_listing_container parent_view">
+
+	<div id="tl_buttons">
+		<a href="contao?do=news&amp;rt=<?= REQUEST_TOKEN ?>" class="header_back" title="" accesskey="b" onclick="Backend.getScrollOffset()"><?= $GLOBALS['TL_LANG']['MSC']['backBT'] ?></a> 
+	</div>
+
+	<div onmouseout="Theme.hoverDiv(this,0)" onmouseover="Theme.hoverDiv(this,1)" class="tl_header click2edit toggle_select" style="">
+		<table class="tl_header_table" width="100%">
+			<tbody>
+			<tr>
+				<td><span class="tl_label">Top-100 Nachrichten (von <?= $this->Anzahl ?>)</span> <span style="color:red"><?= $this->Datum ?></span>
+				(<?= $this->ZurueckLink ?>/<?= $this->VorLink ?>)
+				</td>
+				<td>Heute: <b><?= $this->LinkAktuellesJahr ?></b> - <b><?= $this->LinkAktuellerMonat ?></b> - <b><?= $this->LinkAktuellerTag ?></b></td>
+			</tr></tbody>
+		</table>
+	</div>
+
+<?php if($this->daten): ?>
+	<div class="tl_listing_container list_view" id="tl_listing">
+	<table class="tl_listing showColumns">
+	<tbody>
+		<tr>
+			<th class="tl_folder_tlist">Platz</th>
+			<th class="tl_folder_tlist">Titel</th>
+			<th class="tl_folder_tlist">Datum</th>
+			<th class="tl_folder_tlist">Alias</th>
+			<th class="tl_folder_tlist">Aufrufe</th>
+			<th class="tl_folder_tlist">Archiv</th>
+		</tr>
+		<?php foreach ($this->daten as $item): ?>
+			<tr class="<?= $item['css'] ?> click2edit toggle_select hover-row">
+				<td class="tl_file_list"><?= $item['platz'] ?></td>
+				<td class="tl_file_list"><?= $item['titel'] ?></td>
+				<td class="tl_file_list"><?= $item['datum'] ?></td>
+				<td class="tl_file_list"><?= $item['alias'] ?></td>
+				<td class="tl_file_list"><?= $item['hits'] ?></td>
+				<td class="tl_file_list"><?= $item['archiv'] ?></td>
+			</tr>
+		<?php endforeach; ?>
+	</tbody>
+	</table>
+	</div>
+<?php else: ?>
+	<div class="tl_listing_container list_view" id="tl_listing">
+		Keine Daten
+	</div>
+<?php endif; ?>
+
+</div>

@@ -50,8 +50,8 @@ class Statistik
 		{
 			// Zähler für Nachricht einlesen
 			$ergebnis = \Database::getInstance()->prepare("SELECT * FROM tl_fh_counter WHERE source = ? AND pid = ?")
-												->limit(1)
-												->execute('tl_news', $id);
+			                                    ->limit(1)
+			                                    ->execute('tl_news', $id);
 			
 			// Zähler auswerten
 			if($ergebnis->numRows == 1)

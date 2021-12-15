@@ -17,7 +17,7 @@ class Plugin implements BundlePluginInterface
 	{
 		return [
 			BundleConfig::create(ContaoCounterBundle::class)
-				->setLoadAfter([ContaoCoreBundle::class]),
+				->setLoadAfter([ContaoCoreBundle::class, \Contao\NewsBundle\ContaoNewsBundle::class]),
 		];
 	}
 }

@@ -1,5 +1,9 @@
 # Counter Changelog
 
+## Version 1.1.0 (2021-12-15)
+
+* Add: Backend-Ausgabe der Nachrichten-Statistik
+
 ## Version 1.0.4 (2021-10-07)
 
 * Fix: Debug-Ausgabe in Tag.php entfernt
