@@ -1,6 +1,12 @@
 # Counter Changelog
 
-* Fix: Call to a member function store() on null
+## Version 1.1.4 (2021-12-16)
+
+* Change: Caching auch für aktuellen Tag eingestellt (auf 1 Stunde)
+
+## Version 1.1.3 (2021-12-16)
+
+* Fix: Call to a member function store() on null (Helper-Klasse nicht richtig eingebunden)
 
 ## Version 1.1.2 (2021-12-16)
 

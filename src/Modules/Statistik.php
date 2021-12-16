@@ -26,6 +26,7 @@ class Statistik
 
 		$nachrichtenarchiv = self::Archive(); // Nachrichten-Archive laden
 		$caching = true; // Cache einschalten
+		$cachetime = 3600 * 24 * 365; // 1 Jahr (Standard)
 
 		// Aktuelles Datum ermitteln
 		$aktJahr  = date('Y');
@@ -45,7 +46,8 @@ class Statistik
 			$viewJahr = $aktJahr;
 			$viewMonat = $aktMonat;
 			$viewTag = $aktTag;
-			$caching = false; // Cache ausschalten, da aktueller Tag gewünscht ist
+			//$caching = false; // Cache ausschalten, da aktueller Tag gewünscht ist
+			$cachetime = 3600; // 1 Stunde
 		}
 		elseif($urlJahr && !$urlMonat && !$urlTag)
 		{
@@ -55,7 +57,11 @@ class Statistik
 			$viewTag = 0;
 			// Anderes Jahr gewünscht?
 			if($differenz) $viewJahr += $differenz;
-			if($viewJahr == $aktJahr) $caching = false; // Cache abschalten, wenn aktuelles Jahr gewünscht ist
+			if($viewJahr == $aktJahr)
+			{
+				//$caching = false; // Cache abschalten, wenn aktuelles Jahr gewünscht ist
+				$cachetime = 3600; // 1 Stunde
+			}
 		}
 		elseif($urlJahr && $urlMonat && !$urlTag)
 		{
@@ -78,7 +84,11 @@ class Statistik
 					$viewJahr--;
 				}
 			}
-			if($viewJahr == $aktJahr && $viewMonat == $aktMonat) $caching = false; // Cache abschalten, wenn aktuelles Jahr/Monat gewünscht ist
+			if($viewJahr == $aktJahr && $viewMonat == $aktMonat)
+			{
+				//$caching = false; // Cache abschalten, wenn aktuelles Jahr/Monat gewünscht ist
+				$cachetime = 3600; // 1 Stunde
+			}
 		}
 		elseif($urlJahr && $urlMonat && $urlTag)
 		{
@@ -95,7 +105,11 @@ class Statistik
 				$viewMonat = date('n', $neuzeit);
 				$viewTag   = date('j', $neuzeit);
 			}
-			if($viewJahr == $aktJahr && $viewMonat == $aktMonat && $viewTag == $aktTag) $caching = false; // Cache abschalten, wenn aktueller Tag gewünscht ist
+			if($viewJahr == $aktJahr && $viewMonat == $aktMonat && $viewTag == $aktTag)
+			{
+				//$caching = false; // Cache abschalten, wenn aktueller Tag gewünscht ist
+				$cachetime = 3600; // 1 Stunde
+			}
 		}
 
 		// Vor- und Zurücklinks generieren
