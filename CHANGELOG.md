@@ -1,5 +1,10 @@
 # Counter Changelog
 
+## Version 1.1.2 (2021-12-16)
+
+* Fix: Zeilenumbruch beim Datum und beim Archiv verhindern verhindern (Statistik-Modul)
+* Add: schachbulle/contao-helper-bundle für die Cache-Funktion
+
 ## Version 1.1.1 (2021-12-15)
 
 * Change: Umstrukturierung der Top-Tabelle, z.B. ohne Alias

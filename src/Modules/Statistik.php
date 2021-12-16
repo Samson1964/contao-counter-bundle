@@ -16,23 +16,22 @@ class Statistik
 {
 
 	/**
-	 * Listet alle Links auf
-	 * @param string	Serialisiertes Array mit den Daten
-	 * @return array
+	 * Funktion NewsStatistik
 	 */
 	public function NewsStatistik()
 	{
 
 		$Template = new \BackendTemplate('be_counter_news');
-		$Template->request = ampersand(\Environment::getInstance()->request, true);     
-		
+		$Template->request = ampersand(\Environment::getInstance()->request, true);
+
 		$nachrichtenarchiv = self::Archive(); // Nachrichten-Archive laden
+		$caching = true; // Cache einschalten
 
 		// Aktuelles Datum ermitteln
 		$aktJahr  = date('Y');
 		$aktMonat = date('n');
 		$aktTag   = date('j');
-		
+
 		// Datum und Datumsrichtung aus URL ermitteln
 		$urlJahr = (int)\Input::get('jahr');
 		$urlMonat = (int)\Input::get('monat');
@@ -46,6 +45,7 @@ class Statistik
 			$viewJahr = $aktJahr;
 			$viewMonat = $aktMonat;
 			$viewTag = $aktTag;
+			$caching = false; // Cache ausschalten, da aktueller Tag gewünscht ist
 		}
 		elseif($urlJahr && !$urlMonat && !$urlTag)
 		{
@@ -55,6 +55,7 @@ class Statistik
 			$viewTag = 0;
 			// Anderes Jahr gewünscht?
 			if($differenz) $viewJahr += $differenz;
+			if($viewJahr == $aktJahr) $caching = false; // Cache abschalten, wenn aktuelles Jahr gewünscht ist
 		}
 		elseif($urlJahr && $urlMonat && !$urlTag)
 		{
@@ -77,6 +78,7 @@ class Statistik
 					$viewJahr--;
 				}
 			}
+			if($viewJahr == $aktJahr && $viewMonat == $aktMonat) $caching = false; // Cache abschalten, wenn aktuelles Jahr/Monat gewünscht ist
 		}
 		elseif($urlJahr && $urlMonat && $urlTag)
 		{
@@ -93,6 +95,7 @@ class Statistik
 				$viewMonat = date('n', $neuzeit);
 				$viewTag   = date('j', $neuzeit);
 			}
+			if($viewJahr == $aktJahr && $viewMonat == $aktMonat && $viewTag == $aktTag) $caching = false; // Cache abschalten, wenn aktueller Tag gewünscht ist
 		}
 
 		// Vor- und Zurücklinks generieren
@@ -110,58 +113,86 @@ class Statistik
 		$aktMonatLink = 'jahr='.$aktJahr.'&monat='.$aktMonat.'&tag=0';
 		// Link-Parameter für aktuellen Tag
 		$aktTagLink = 'jahr='.$aktJahr.'&monat='.$aktMonat.'&tag='.$aktTag;
-		
-		// Zähler für Nachrichten einlesen
-		$ergebnis = \Database::getInstance()->prepare("SELECT * FROM tl_fh_counter WHERE source=?")
-		                                    ->execute('tl_news');
 
-		// Zähler für Nachrichten auswerten
-		$zaehlerdaten = array();
-		if($ergebnis->numRows)
+		// Abfrage und Auswertung starten
+		if($caching)
 		{
-			while($ergebnis->next())
+			// Der Cache soll verwendet werden
+			// Cache initialisieren
+			$cache = new \Schachbulle\ContaoHelperBundle\Classes\Cache(array('name' => 'NewsStatistik', 'extension' => '.cache'));
+			$cache->eraseExpired(); // Cache aufräumen, abgelaufene Schlüssel löschen
+			$cacheKey = $viewJahr.'.'.$viewMonat.'.'.$viewTag;
+
+			// Cache laden
+			if($cache->isCached($cacheKey))
 			{
-				// Nachricht laden
-				$news = \Database::getInstance()->prepare("SELECT * FROM tl_news WHERE id=?")
-				                                ->execute($ergebnis->pid);
-				$zaehlerdaten[] = array
-				(
-					'hits'   => self::getCounter($ergebnis->counter, array($viewJahr, $viewMonat, $viewTag)),
-					'id'     => $ergebnis->pid,
-					'archiv' => $nachrichtenarchiv[$news->pid],
-					'alias'  => $news->alias,
-					'titel'  => $news->headline,
-					'datum'  => date("d.m.Y H:i",$news->date),
-					'tstamp' => $news->date,
-				);
+				$cacheResult = $cache->retrieve($cacheKey);
 			}
 		}
 
-		$sorted = self::sortArrayByFields
-		(
-			$zaehlerdaten,
-			array
-			(
-				'hits'     => SORT_DESC,
-				'tstamp'   => SORT_DESC
-			)
-		);
-
-		$daten = array_slice($sorted, 0, 100); // Daten-Array kürzen
-		// Daten-Array modifizieren
-		$platz = 1;
-		$even = false;
-		for($x=0; $x<count($daten); $x++)
+		if($cacheResult)
 		{
-			$even = $even ? false : true;
-			$daten[$x]['platz'] = $platz;
-			$daten[$x]['css'] = $even ? 'even' : 'odd';
-			$platz++;
+			// Cachedaten zuweisen
+			$daten = $cacheResult;
+		}
+		else
+		{
+			// Nichts im Cache gefunden, deshalb Datenbank abfragen
+			// Zähler für Nachrichten einlesen
+			$ergebnis = \Database::getInstance()->prepare("SELECT * FROM tl_fh_counter WHERE source=?")
+			                                    ->execute('tl_news');
+
+			// Zähler für Nachrichten auswerten
+			$zaehlerdaten = array();
+			if($ergebnis->numRows)
+			{
+				while($ergebnis->next())
+				{
+					// Nachricht laden
+					$news = \Database::getInstance()->prepare("SELECT * FROM tl_news WHERE id=?")
+					                                ->execute($ergebnis->pid);
+					$zaehlerdaten[] = array
+					(
+						'hits'   => self::getCounter($ergebnis->counter, array($viewJahr, $viewMonat, $viewTag)),
+						'id'     => $ergebnis->pid,
+						'archiv' => $nachrichtenarchiv[$news->pid],
+						'alias'  => $news->alias,
+						'titel'  => $news->headline,
+						'datum'  => date("d.m.Y H:i",$news->date),
+						'tstamp' => $news->date,
+					);
+				}
+			}
+
+			$sorted = self::sortArrayByFields
+			(
+				$zaehlerdaten,
+				array
+				(
+					'hits'     => SORT_DESC,
+					'tstamp'   => SORT_DESC
+				)
+			);
+
+			$daten = array_slice($sorted, 0, 100); // Daten-Array kürzen
+			// Daten-Array modifizieren
+			$platz = 1;
+			$even = false;
+			for($x=0; $x<count($daten); $x++)
+			{
+				$even = $even ? false : true;
+				$daten[$x]['platz'] = $platz;
+				$daten[$x]['css'] = $even ? 'even' : 'odd';
+				$platz++;
+			}
+
+			// Cache speichern
+			$cachetime = 3600 * 24 * 365; // 1 Jahr
+			$cache->store($cacheKey, $daten, $cachetime);
 		}
 
 		$Template->daten = $daten;
 		$Template->Datum = $datum;
-		$Template->Anzahl = $ergebnis->numRows;
 		$Template->VorLink = $vorLink;
 		$Template->ZurueckLink = $zurueckLink;
 		$Template->LinkAktuellesJahr = '<a href="contao?do=news&key=counter&'.$aktJahrLink.'&rt='.REQUEST_TOKEN.'">'.$aktJahr.'</a>';
@@ -170,7 +201,7 @@ class Statistik
 
 		return $Template->parse();
 	}
-	
+
 	/**
 	 * Funktion Archive
 	 * Liefert ein Array mit der Archiv-ID als Schlüssel und dem Archiv-Zitel als Wert
@@ -223,16 +254,16 @@ class Statistik
 	{
 		$sortFields = array();
 		$args       = array();
-		
+
 		foreach ($arr as $key => $row) {
 			foreach ($fields as $field => $order) {
 				$sortFields[$field][$key] = $row[$field];
 			}
 		}
-		
+
 		foreach ($fields as $field => $order) {
 			$args[] = $sortFields[$field];
-			
+
 			if (is_array($order)) {
 				foreach ($order as $pt) {
 					$args[$pt];
@@ -241,11 +272,11 @@ class Statistik
 				$args[] = $order;
 			}
 		}
-		
+
 		$args[] = &$arr;
-		
+
 		call_user_func_array('array_multisort', $args);
-		
+
 		return $arr;
 	}
 }
