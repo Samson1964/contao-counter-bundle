@@ -187,8 +187,11 @@ class Statistik
 			}
 
 			// Cache speichern
-			$cachetime = 3600 * 24 * 365; // 1 Jahr
-			$cache->store($cacheKey, $daten, $cachetime);
+			if($caching)
+			{
+				$cachetime = 3600 * 24 * 365; // 1 Jahr
+				$cache->store($cacheKey, $daten, $cachetime);
+			}
 		}
 
 		$Template->daten = $daten;

@@ -7,6 +7,7 @@ use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
 use Schachbulle\ContaoCounterBundle\ContaoCounterBundle;
+//use Schachbulle\ContaoHelperBundle\Classes;
 
 class Plugin implements BundlePluginInterface
 {
