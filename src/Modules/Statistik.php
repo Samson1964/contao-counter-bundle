@@ -140,6 +140,7 @@ class Statistik
 			// Cache laden
 			if($cache->isCached($cacheKey))
 			{
+				$cacheDatum = $cache->retrieve($cacheKey, true);
 				$cacheResult = $cache->retrieve($cacheKey);
 			}
 		}
@@ -210,6 +211,7 @@ class Statistik
 
 		$Template->daten = $daten;
 		$Template->Datum = $datum;
+		$Template->cacheDatum = $cacheDatum ? date('d.m.Y H:i', $cacheDatum) : 'gerade eben';
 		$Template->VorLink = $vorLink;
 		$Template->ZurueckLink = $zurueckLink;
 		$Template->LinkAktuellesJahr = '<a href="contao?do=news&key=counter&'.$aktJahrLink.'&rt='.REQUEST_TOKEN.'">'.$aktJahr.'</a>';

@@ -8,7 +8,7 @@
 		<table class="tl_header_table" width="100%">
 			<tbody>
 			<tr>
-				<td><span class="tl_label">Top-100 Nachrichten</span> <span style="color:red"><?= $this->Datum ?></span>
+				<td><span class="tl_label">Top-100 Nachrichten (Aktualisiert: <?= $this->cacheDatum ?>)</span> <span style="color:red"><?= $this->Datum ?></span>
 				(<?= $this->ZurueckLink ?>/<?= $this->VorLink ?>)
 				</td>
 				<td>Heute: <b><?= $this->LinkAktuellesJahr ?></b> - <b><?= $this->LinkAktuellerMonat ?></b> - <b><?= $this->LinkAktuellerTag ?></b></td>

@@ -1,5 +1,9 @@
 # Counter Changelog
 
+## Version 1.1.5 (2021-12-20)
+
+* Add: Ausgabe der Cachezeit (scheint nicht zu funktionieren, da der Zeitstempel nicht von retrieve "verloren geht")
+
 ## Version 1.1.4 (2021-12-16)
 
 * Change: Caching auch für aktuellen Tag eingestellt (auf 1 Stunde)
