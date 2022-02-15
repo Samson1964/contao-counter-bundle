@@ -23,5 +23,20 @@ $GLOBALS['TL_HOOKS']['replaceInsertTags'][] = array('Schachbulle\ContaoCounterBu
 // Backend-Module der Nachrichten erweitern
 $GLOBALS['BE_MOD']['content']['news']['counter'] = array
 (
-	'Schachbulle\ContaoCounterBundle\Modules\Statistik', 'NewsStatistik'
+	'Schachbulle\ContaoCounterBundle\Modules\StatistikNews', 'Statistik'
 );
+
+// Backend-Module der Seitenstruktur erweitern
+$GLOBALS['BE_MOD']['design']['page']['counter'] = array
+(
+	'Schachbulle\ContaoCounterBundle\Modules\StatistikPages', 'Statistik'
+);
+
+/**
+ * -------------------------------------------------------------------------
+ * Voreinstellungen
+ * -------------------------------------------------------------------------
+ */
+
+$GLOBALS['TL_CONFIG']['counter_topx_news'] = '100';
+$GLOBALS['TL_CONFIG']['counter_topx_pages'] = '100';

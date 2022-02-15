@@ -1,5 +1,11 @@
 # Counter Changelog
 
+## Version 1.2.0 (2022-02-15)
+
+* Change: Modules\Statistik.php -> Modules\StatistikNews.php
+* Add: Backend-Ausgabe der Seiten-Statistik
+* Add: Einstellungen für Anzahl der anzuzeigenden Top-x bei Nachrichten und Seiten (Standard: 100)
+
 ## Version 1.1.5 (2021-12-20)
 
 * Add: Ausgabe der Cachezeit (scheint nicht zu funktionieren, da der Zeitstempel nicht von retrieve "verloren geht")

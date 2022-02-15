@@ -12,13 +12,13 @@
 
 namespace Schachbulle\ContaoCounterBundle\Modules;
 
-class Statistik
+class StatistikNews
 {
 
 	/**
-	 * Funktion NewsStatistik
+	 * Funktion Statistik
 	 */
-	public function NewsStatistik()
+	public function Statistik()
 	{
 
 		$Template = new \BackendTemplate('be_counter_news');
@@ -135,7 +135,7 @@ class Statistik
 			// Cache initialisieren
 			$cache = new \Schachbulle\ContaoHelperBundle\Classes\Cache(array('name' => 'NewsStatistik', 'extension' => '.cache'));
 			$cache->eraseExpired(); // Cache aufräumen, abgelaufene Schlüssel löschen
-			$cacheKey = $viewJahr.'.'.$viewMonat.'.'.$viewTag;
+			$cacheKey = $viewJahr.'.'.$viewMonat.'.'.$viewTag.'.'.$GLOBALS['TL_CONFIG']['counter_topx_news'];
 
 			// Cache laden
 			if($cache->isCached($cacheKey))
@@ -189,7 +189,7 @@ class Statistik
 				)
 			);
 
-			$daten = array_slice($sorted, 0, 100); // Daten-Array kürzen
+			$daten = array_slice($sorted, 0, $GLOBALS['TL_CONFIG']['counter_topx_news']); // Daten-Array kürzen
 			// Daten-Array modifizieren
 			$platz = 1;
 			$even = false;
@@ -209,6 +209,7 @@ class Statistik
 			}
 		}
 
+		$Template->Anzahl = $GLOBALS['TL_CONFIG']['counter_topx_news'];
 		$Template->daten = $daten;
 		$Template->Datum = $datum;
 		$Template->cacheDatum = $cacheDatum ? date('d.m.Y H:i', $cacheDatum) : 'gerade eben';

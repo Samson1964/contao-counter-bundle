@@ -1,14 +1,14 @@
 <div class="tl_listing_container parent_view">
 
 	<div id="tl_buttons">
-		<a href="contao?do=news&amp;rt=<?= REQUEST_TOKEN ?>" class="header_back" title="" accesskey="b" onclick="Backend.getScrollOffset()"><?= $GLOBALS['TL_LANG']['MSC']['backBT'] ?></a> 
+		<a href="contao?do=page&amp;rt=<?= REQUEST_TOKEN ?>" class="header_back" title="" accesskey="b" onclick="Backend.getScrollOffset()"><?= $GLOBALS['TL_LANG']['MSC']['backBT'] ?></a> 
 	</div>
 
 	<div onmouseout="Theme.hoverDiv(this,0)" onmouseover="Theme.hoverDiv(this,1)" class="tl_header click2edit toggle_select" style="">
 		<table class="tl_header_table" width="100%">
 			<tbody>
 			<tr>
-				<td><span class="tl_label">Top-<?= $this->Anzahl ?> Nachrichten (Aktualisiert: <?= $this->cacheDatum ?>)</span> <span style="color:red"><?= $this->Datum ?></span>
+				<td><span class="tl_label">Top-<?= $this->Anzahl ?> Seiten (Aktualisiert: <?= $this->cacheDatum ?>)</span> <span style="color:red"><?= $this->Datum ?></span>
 				(<?= $this->ZurueckLink ?>/<?= $this->VorLink ?>)
 				</td>
 				<td>Heute: <b><?= $this->LinkAktuellesJahr ?></b> - <b><?= $this->LinkAktuellerMonat ?></b> - <b><?= $this->LinkAktuellerTag ?></b></td>
@@ -23,8 +23,8 @@
 		<tr>
 			<th class="tl_folder_tlist">Platz</th>
 			<th class="tl_folder_tlist">Zugriffe</th>
-			<th class="tl_folder_tlist">Nachricht</th>
-			<th class="tl_folder_tlist">Archiv</th>
+			<th class="tl_folder_tlist">Seite</th>
+			<th class="tl_folder_tlist">Alias</th>
 			<th class="tl_folder_tlist">Veröffentlicht</th>
 		</tr>
 		<?php foreach ($this->daten as $item): ?>
@@ -32,7 +32,7 @@
 				<td class="tl_file_list"><?= $item['platz'] ?></td>
 				<td class="tl_file_list"><?= $item['hits'] ?></td>
 				<td class="tl_file_list"><?= $item['titel'] ?></td>
-				<td class="tl_file_list" style="white-space: nowrap;"><?= $item['archiv'] ?></td>
+				<td class="tl_file_list"><?= $item['alias'] ?></td>
 				<td class="tl_file_list" style="white-space: nowrap;"><?= $item['datum'] ?></td>
 			</tr>
 		<?php endforeach; ?>
