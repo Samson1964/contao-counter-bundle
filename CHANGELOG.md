@@ -1,5 +1,9 @@
 # Counter Changelog
 
+## Version 1.2.1 (2022-11-11)
+
+* Change: Abhängigkeit PHP-Version aufgehoben
+
 ## Version 1.2.0 (2022-02-15)
 
 * Change: Modules\Statistik.php -> Modules\StatistikNews.php
