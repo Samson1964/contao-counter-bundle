@@ -108,10 +108,13 @@ class Register extends \Module
 		/*****************************************
 		*** Zählung des Artikels (tl_article) ****
 		******************************************/
-		$id_article = \Input::get('articles');
-		$objArticleModel = \ArticleModel::findByIdOrAlias($id_article);
-		$id_article = $objArticleModel->id;
-		if($id_article) $this->RegisterCounter($id_article, 'tl_article', $this->fhc_register_articles);
+		$alias_article = \Input::get('articles');
+		$objArticleModel = \ArticleModel::findByIdOrAlias($alias_article);
+		if($objArticleModel)
+		{
+			$id_article = $objArticleModel->id;
+			if($id_article) $this->RegisterCounter($id_article, 'tl_article', $this->fhc_register_articles);
+		}
 
 		/*****************************************
 		*** Zählung der Nachricht (tl_news) ******
@@ -232,7 +235,7 @@ class Register extends \Module
 					$array_toponline['onlinetime'] = $this->fhc_onlinetime;
 				}
 
-				 /**********************************
+				/**********************************
 				 Zählstatus
 				 **********************************/
 				// Älteste Sperrzeit festlegen
@@ -246,7 +249,7 @@ class Register extends \Module
 					}
 				}
 				// Besucher bereits gezählt?
-				($array_iparray[$this->ip]) ? $zaehlen = false : $zaehlen = true;
+				$zaehlen = $array_iparray[$this->ip] ? false : true; // false = Nicht zählen, da IP bereits erfaßt
 				// Aktuellen Besucher aktualisieren/eintragen
 				$array_iparray[$this->ip] = $this->zeit;
 
@@ -323,34 +326,35 @@ class Register extends \Module
 						$lastvisit = $set['tstamp'];
 						$lastip = $set['lastip'];
 					}
-				}
+				}   
+				
+				// GLOBALS füllen
+				$GLOBALS['fhcounter'][$source_name]['counting'] = $zaehlen;
+				$GLOBALS['fhcounter'][$source_name]['tstamp'] = $lastvisit;
+				$GLOBALS['fhcounter'][$source_name]['starttime'] = $starttime;
+				$GLOBALS['fhcounter'][$source_name]['source'] = $source_name;
+				$GLOBALS['fhcounter'][$source_name]['pid'] = $source_id;
+				$GLOBALS['fhcounter'][$source_name]['totalhits'] = $array_counter['all'];
+				$GLOBALS['fhcounter'][$source_name]['lastcounting'] = $lastcounting;
+				$GLOBALS['fhcounter'][$source_name]['lastip'] = $lastip;
+				$GLOBALS['fhcounter'][$source_name]['toponline'] = $array_toponline;
+				$GLOBALS['fhcounter'][$source_name]['counter'] = $array_counter;
+				$GLOBALS['fhcounter'][$source_name]['online'] = count($array_online);
+            	
+				// Standardzähler in GLOBALS aktualisieren
+				$GLOBALS['fhcounter']['default']['counting'] = $GLOBALS['fhcounter'][$source_name]['counting'];
+				$GLOBALS['fhcounter']['default']['tstamp'] = $GLOBALS['fhcounter'][$source_name]['tstamp'];
+				$GLOBALS['fhcounter']['default']['starttime'] = $GLOBALS['fhcounter'][$source_name]['starttime'];
+				$GLOBALS['fhcounter']['default']['source'] = $GLOBALS['fhcounter'][$source_name]['source'];
+				$GLOBALS['fhcounter']['default']['pid'] = $GLOBALS['fhcounter'][$source_name]['pid'];
+				$GLOBALS['fhcounter']['default']['totalhits'] = $GLOBALS['fhcounter'][$source_name]['totalhits'];
+				$GLOBALS['fhcounter']['default']['lastcounting'] = $GLOBALS['fhcounter'][$source_name]['lastcounting'];
+				$GLOBALS['fhcounter']['default']['lastip'] = $GLOBALS['fhcounter'][$source_name]['lastip'];
+				$GLOBALS['fhcounter']['default']['toponline'] = $GLOBALS['fhcounter'][$source_name]['toponline'];
+				$GLOBALS['fhcounter']['default']['counter'] = $GLOBALS['fhcounter'][$source_name]['counter'];
+				$GLOBALS['fhcounter']['default']['online'] = $GLOBALS['fhcounter'][$source_name]['online'];
 			}
 
-			// GLOBALS füllen
-			$GLOBALS['fhcounter'][$source_name]['counting'] = $zaehlen;
-			$GLOBALS['fhcounter'][$source_name]['tstamp'] = $lastvisit;
-			$GLOBALS['fhcounter'][$source_name]['starttime'] = $starttime;
-			$GLOBALS['fhcounter'][$source_name]['source'] = $source_name;
-			$GLOBALS['fhcounter'][$source_name]['pid'] = $source_id;
-			$GLOBALS['fhcounter'][$source_name]['totalhits'] = $array_counter['all'];
-			$GLOBALS['fhcounter'][$source_name]['lastcounting'] = $lastcounting;
-			$GLOBALS['fhcounter'][$source_name]['lastip'] = $lastip;
-			$GLOBALS['fhcounter'][$source_name]['toponline'] = $array_toponline;
-			$GLOBALS['fhcounter'][$source_name]['counter'] = $array_counter;
-			$GLOBALS['fhcounter'][$source_name]['online'] = count($array_online);
-
-			// Standardzähler in GLOBALS aktualisieren
-			$GLOBALS['fhcounter']['default']['counting'] = $GLOBALS['fhcounter'][$source_name]['counting'];
-			$GLOBALS['fhcounter']['default']['tstamp'] = $GLOBALS['fhcounter'][$source_name]['tstamp'];
-			$GLOBALS['fhcounter']['default']['starttime'] = $GLOBALS['fhcounter'][$source_name]['starttime'];
-			$GLOBALS['fhcounter']['default']['source'] = $GLOBALS['fhcounter'][$source_name]['source'];
-			$GLOBALS['fhcounter']['default']['pid'] = $GLOBALS['fhcounter'][$source_name]['pid'];
-			$GLOBALS['fhcounter']['default']['totalhits'] = $GLOBALS['fhcounter'][$source_name]['totalhits'];
-			$GLOBALS['fhcounter']['default']['lastcounting'] = $GLOBALS['fhcounter'][$source_name]['lastcounting'];
-			$GLOBALS['fhcounter']['default']['lastip'] = $GLOBALS['fhcounter'][$source_name]['lastip'];
-			$GLOBALS['fhcounter']['default']['toponline'] = $GLOBALS['fhcounter'][$source_name]['toponline'];
-			$GLOBALS['fhcounter']['default']['counter'] = $GLOBALS['fhcounter'][$source_name]['counter'];
-			$GLOBALS['fhcounter']['default']['online'] = $GLOBALS['fhcounter'][$source_name]['online'];
 		}
 		else
 		{

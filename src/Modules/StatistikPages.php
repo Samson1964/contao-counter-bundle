@@ -145,7 +145,7 @@ class StatistikPages
 			}
 		}
 
-		if($cacheResult)
+		if(isset($cacheResult))
 		{
 			// Cachedaten zuweisen
 			$daten = $cacheResult;
@@ -178,15 +178,23 @@ class StatistikPages
 				}
 			}
 
-			$sorted = self::sortArrayByFields
-			(
-				$zaehlerdaten,
-				array
+			// Zählerdaten sortieren, wenn welche vorhanden sind
+			if($zaehlerdaten)
+			{
+				$sorted = self::sortArrayByFields
 				(
-					'hits'     => SORT_DESC,
-					'tstamp'   => SORT_DESC
-				)
-			);
+					$zaehlerdaten,
+					array
+					(
+						'hits'     => SORT_DESC,
+						'tstamp'   => SORT_DESC
+					)
+				);
+			}
+			else
+			{
+				$sorted = $zaehlerdaten; // Keine Zählerdaten vorhanden
+			}
 
 			$daten = array_slice($sorted, 0, $GLOBALS['TL_CONFIG']['counter_topx_pages']); // Daten-Array kürzen
 			// Daten-Array modifizieren
@@ -211,7 +219,7 @@ class StatistikPages
 		$Template->Anzahl = $GLOBALS['TL_CONFIG']['counter_topx_pages'];
 		$Template->daten = $daten;
 		$Template->Datum = $datum;
-		$Template->cacheDatum = $cacheDatum ? date('d.m.Y H:i', $cacheDatum) : 'gerade eben';
+		$Template->cacheDatum = (isset($cacheDatum) && $cacheDatum > 0) ? date('d.m.Y H:i', $cacheDatum) : 'gerade eben';
 		$Template->VorLink = $vorLink;
 		$Template->ZurueckLink = $zurueckLink;
 		$Template->LinkAktuellesJahr = '<a href="contao?do=page&key=counter&'.$aktJahrLink.'&rt='.REQUEST_TOKEN.'">'.$aktJahr.'</a>';

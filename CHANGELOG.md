@@ -1,5 +1,13 @@
 # Counter Changelog
 
+## Version 1.2.2 (2022-11-11)
+
+* Fix: Warning in PHP 8: Undefined variable $zaehlen in Classes/Register.php
+* Fix: Warning in PHP 8: Attempt to read property "id" on null in Classes/Register.php
+* Fix: Warning in PHP 8: Undefined variable $cacheResult in Modules/StatistikPages.php (line 148)
+* Fix: Warning in PHP 8: Undefined array key "hits" in Modules/StatistikPages.php (line 284) 
+* Fix: Warning in PHP 8: Undefined variable $cacheDatum in Modules/StatistikPages.php (line 221) 
+
 ## Version 1.2.1 (2022-11-11)
 
 * Change: Abhängigkeit PHP-Version aufgehoben
