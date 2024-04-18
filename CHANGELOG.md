@@ -1,5 +1,10 @@
 # Counter Changelog
 
+## Version 1.2.3 (2024-04-18)
+
+* Add: tl_settings.counter_donotlog404 -> Fehler 404 nicht im System-Log protokollieren
+* Add: tl_settings.counter_donotlogid -> Fehlende source_id nicht im System-Log protokollieren
+
 ## Version 1.2.2 (2022-11-11)
 
 * Fix: Warning in PHP 8: Undefined variable $zaehlen in Classes/Register.php

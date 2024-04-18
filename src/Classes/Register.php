@@ -11,7 +11,7 @@
  * @copyright Frank Hoppe 2014
  */
 
-namespace Schachbulle\ContaoCounterBundle\Classes; 
+namespace Schachbulle\ContaoCounterBundle\Classes;
 
 /**
  * Class CounterRegister
@@ -31,7 +31,7 @@ class Register extends \Module
 	var $monat;
 	var $tag;
 	var $stunde;
-	
+
 	// Backend-Status
 	var $be_user;
 
@@ -101,7 +101,7 @@ class Register extends \Module
 			$log .= ' --- IP='.$_SERVER['REMOTE_ADDR'];
 			$log .= ' --- AGENT='.$_SERVER['HTTP_USER_AGENT'];
 			// Log-Eintrag machen, da Seite nicht gefunden wurde und Referer vorhanden ist
-			\System::log('Fehler 404: '.$log, __CLASS__.'::'.__FUNCTION__, TL_ERROR);
+			if(!$GLOBALS['TL_CONFIG']['counter_donotlog404']) \System::log('Fehler 404: '.$log, __CLASS__.'::'.__FUNCTION__, TL_ERROR);
 		}
 		$this->RegisterCounter($objPage->id, 'tl_page', $this->fhc_register_pages);
 
@@ -326,8 +326,8 @@ class Register extends \Module
 						$lastvisit = $set['tstamp'];
 						$lastip = $set['lastip'];
 					}
-				}   
-				
+				}
+
 				// GLOBALS füllen
 				$GLOBALS['fhcounter'][$source_name]['counting'] = $zaehlen;
 				$GLOBALS['fhcounter'][$source_name]['tstamp'] = $lastvisit;
@@ -340,7 +340,7 @@ class Register extends \Module
 				$GLOBALS['fhcounter'][$source_name]['toponline'] = $array_toponline;
 				$GLOBALS['fhcounter'][$source_name]['counter'] = $array_counter;
 				$GLOBALS['fhcounter'][$source_name]['online'] = count($array_online);
-            	
+
 				// Standardzähler in GLOBALS aktualisieren
 				$GLOBALS['fhcounter']['default']['counting'] = $GLOBALS['fhcounter'][$source_name]['counting'];
 				$GLOBALS['fhcounter']['default']['tstamp'] = $GLOBALS['fhcounter'][$source_name]['tstamp'];
@@ -359,7 +359,7 @@ class Register extends \Module
 		else
 		{
 			// source_id ist leer, Fehler loggen
-			$this->log('FH-Counter source_id='.$source_id.', source_name='.$source_name.', URI='.$_SERVER['REQUEST_URI'], __METHOD__, TL_ERROR);
+			if(!$GLOBALS['TL_CONFIG']['counter_donotlogid']) $this->log('FH-Counter source_id='.$source_id.', source_name='.$source_name.', URI='.$_SERVER['REQUEST_URI'], __METHOD__, TL_ERROR);
 		}
 	}
 
