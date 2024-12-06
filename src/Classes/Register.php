@@ -101,7 +101,7 @@ class Register extends \Module
 			$log .= ' --- IP='.$_SERVER['REMOTE_ADDR'];
 			$log .= ' --- AGENT='.$_SERVER['HTTP_USER_AGENT'];
 			// Log-Eintrag machen, da Seite nicht gefunden wurde und Referer vorhanden ist
-			if(!$GLOBALS['TL_CONFIG']['counter_donotlog404']) \System::log('Fehler 404: '.$log, __CLASS__.'::'.__FUNCTION__, TL_ERROR);
+			if(!isset($GLOBALS['TL_CONFIG']['counter_donotlog404'])) \System::log('Fehler 404: '.$log, __CLASS__.'::'.__FUNCTION__, TL_ERROR);
 		}
 		$this->RegisterCounter($objPage->id, 'tl_page', $this->fhc_register_pages);
 

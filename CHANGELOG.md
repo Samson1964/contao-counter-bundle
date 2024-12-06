@@ -1,5 +1,9 @@
 # Counter Changelog
 
+## Version 1.2.4 (2024-12-06)
+
+* Fix: Warning: Undefined array key "counter_donotlog404" in Classes/Register.php (line 104) 
+
 ## Version 1.2.3 (2024-04-18)
 
 * Add: tl_settings.counter_donotlog404 -> Fehler 404 nicht im System-Log protokollieren
