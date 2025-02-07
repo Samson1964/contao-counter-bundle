@@ -237,7 +237,7 @@ class StatistikPages
 	private function getCounter($data, $datum)
 	{
 		$zaehlerdaten = unserialize($data);
-		if($datum[0] && $datum[1] && $datum[2] && $zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all'])
+		if($datum[0] && $datum[1] && $datum[2] && isset($zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all']))
 		{
 			return $zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all'];
 		}

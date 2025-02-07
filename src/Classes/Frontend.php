@@ -90,7 +90,7 @@ class Frontend extends \Module
 		$debuginfo = array();
 
 		// Zählerwerte tl_page in das Template schreiben
-		if($GLOBALS['fhcounter']['tl_page'] && $this->Template->ViewPages)
+		if(isset($GLOBALS['fhcounter']['tl_page']) && $this->Template->ViewPages)
 		{
 			// Zählerwerte zuweisen
 			$this->Template->PageCounterAll = 0 + $GLOBALS['fhcounter']['tl_page']['counter']["all"];

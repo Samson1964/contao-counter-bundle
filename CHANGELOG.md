@@ -1,5 +1,10 @@
 # Counter Changelog
 
+## Version 1.2.5 (2025-02-07)
+
+* Fix: Warning: Undefined array key 2024 in src/Modules/StatistikPages.php (line 240) 
+* Fix: Frontend-Klasse Zeile 93 -> isset ergänzt
+
 ## Version 1.2.4 (2024-12-06)
 
 * Fix: Warning: Undefined array key "counter_donotlog404" in Classes/Register.php (line 104) 
