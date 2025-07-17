@@ -26,7 +26,7 @@ class StatistikNews
 
 		$nachrichtenarchiv = self::Archive(); // Nachrichten-Archive laden
 		$caching = true; // Cache einschalten
-		$cachetime = 3600 * 24 * 365; // 1 Jahr (Standard)
+		$cachetime = 3600 * 24 * 1; // 1 Tag (Standard)
 
 		// Aktuelles Datum ermitteln
 		$aktJahr  = date('Y');
@@ -145,7 +145,7 @@ class StatistikNews
 			}
 		}
 
-		if($cacheResult)
+		if(isset($cacheResult))
 		{
 			// Cachedaten zuweisen
 			$daten = $cacheResult;
@@ -204,7 +204,7 @@ class StatistikNews
 			// Cache speichern
 			if($caching)
 			{
-				$cachetime = 3600 * 24 * 365; // 1 Jahr
+				$cachetime = 3600 * 24 * 1; // 1 Tag
 				$cache->store($cacheKey, $daten, $cachetime);
 			}
 		}
@@ -212,7 +212,7 @@ class StatistikNews
 		$Template->Anzahl = $GLOBALS['TL_CONFIG']['counter_topx_news'];
 		$Template->daten = $daten;
 		$Template->Datum = $datum;
-		$Template->cacheDatum = $cacheDatum ? date('d.m.Y H:i', $cacheDatum) : 'gerade eben';
+		$Template->cacheDatum = isset($cacheDatum) ? date('d.m.Y H:i', $cacheDatum) : 'gerade eben';
 		$Template->VorLink = $vorLink;
 		$Template->ZurueckLink = $zurueckLink;
 		$Template->LinkAktuellesJahr = '<a href="contao?do=news&key=counter&'.$aktJahrLink.'&rt='.REQUEST_TOKEN.'">'.$aktJahr.'</a>';
@@ -230,7 +230,7 @@ class StatistikNews
 	private function getCounter($data, $datum)
 	{
 		$zaehlerdaten = unserialize($data);
-		if($datum[0] && $datum[1] && $datum[2] && $zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all'])
+		if($datum[0] && $datum[1] && $datum[2] && isset($zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all']))
 		{
 			return $zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all'];
 		}

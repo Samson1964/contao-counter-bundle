@@ -1,5 +1,12 @@
 # Counter Changelog
 
+## Version 1.2.6 (2025-07-17)
+
+* Fix: Warning: Undefined variable $cacheResult in src/Modules/StatistikNews.php (line 148) 
+* Fix: Warning: Undefined array key 2025 in src/Modules/StatistikNews.php (line 233) 
+* Fix: Warning: Undefined variable $cacheDatum in src/Modules/StatistikNews.php (line 215) 
+* Change: Standardcachezeit von 1 Jahr auf 1 Tag gesetzt
+
 ## Version 1.2.5 (2025-02-07)
 
 * Fix: Warning: Undefined array key 2024 in src/Modules/StatistikPages.php (line 240) 
