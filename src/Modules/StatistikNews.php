@@ -170,7 +170,7 @@ class StatistikNews
 					(
 						'hits'   => self::getCounter($ergebnis->counter, array($viewJahr, $viewMonat, $viewTag)),
 						'id'     => $ergebnis->pid,
-						'archiv' => $nachrichtenarchiv[$news->pid],
+						'archiv' => isset($news->pid) ? $nachrichtenarchiv[$news->pid] : 0,
 						'alias'  => $news->alias,
 						'titel'  => $news->headline,
 						'datum'  => date("d.m.Y H:i",$news->date),
@@ -234,7 +234,7 @@ class StatistikNews
 		{
 			return $zaehlerdaten[$datum[0]][$datum[1]][$datum[2]]['all'];
 		}
-		elseif($datum[0] && $datum[1] && !$datum[2] && $zaehlerdaten[$datum[0]][$datum[1]]['all'])
+		elseif($datum[0] && $datum[1] && !$datum[2] && isset($zaehlerdaten[$datum[0]][$datum[1]]['all']))
 		{
 			return $zaehlerdaten[$datum[0]][$datum[1]]['all'];
 		}

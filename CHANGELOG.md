@@ -1,5 +1,10 @@
 # Counter Changelog
 
+## Version 1.2.7 (2025-09-11)
+
+* Fix: Warning: Undefined array key "" in src/Modules/StatistikNews.php (line 173) 
+* Fix: Warning: Undefined array key 9 in /src/Modules/StatistikNews.php (line 237) 
+
 ## Version 1.2.6 (2025-07-17)
 
 * Fix: Warning: Undefined variable $cacheResult in src/Modules/StatistikNews.php (line 148) 
