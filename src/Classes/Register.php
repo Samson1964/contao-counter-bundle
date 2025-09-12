@@ -249,7 +249,7 @@ class Register extends \Module
 					}
 				}
 				// Besucher bereits gezählt?
-				$zaehlen = $array_iparray[$this->ip] ? false : true; // false = Nicht zählen, da IP bereits erfaßt
+				$zaehlen = isset($array_iparray[$this->ip]) ? false : true; // false = Nicht zählen, da IP bereits erfaßt
 				// Aktuellen Besucher aktualisieren/eintragen
 				$array_iparray[$this->ip] = $this->zeit;
 
@@ -264,8 +264,14 @@ class Register extends \Module
 					$array_counter["all"]++;
 					$array_counter[$this->jahr]["all"]++;
 					$array_counter[$this->jahr][$this->monat]["all"]++;
-					$array_counter[$this->jahr][$this->monat][$this->tag]["all"]++;
-					$array_counter[$this->jahr][$this->monat][$this->tag][$this->stunde]++;
+					if(isset($array_counter[$this->jahr][$this->monat][$this->tag]["all"]))
+						$array_counter[$this->jahr][$this->monat][$this->tag]["all"]++;
+					else
+						$array_counter[$this->jahr][$this->monat][$this->tag]["all"] = 0;
+					if(isset($array_counter[$this->jahr][$this->monat][$this->tag][$this->stunde]))
+						$array_counter[$this->jahr][$this->monat][$this->tag][$this->stunde]++;
+					else
+						$array_counter[$this->jahr][$this->monat][$this->tag][$this->stunde]= 0;
 
 					/**********************************
 					 Datenbanktabelle aktualisieren

@@ -1,5 +1,10 @@
 # Counter Changelog
 
+## Version 1.2.8 (2025-09-12)
+
+* Fix: Warning: Undefined array key \"111.48.114.208\" at src/Classes/Register.php:252
+* Fix: Warning: Undefined array key 12 at src/Classes/Register.php:267
+
 ## Version 1.2.7 (2025-09-11)
 
 * Fix: Warning: Undefined array key "" in src/Modules/StatistikNews.php (line 173) 
