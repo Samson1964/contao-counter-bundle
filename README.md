@@ -1,30 +1,30 @@
 # Counter
 
-Ein Modul f¸r Contao ab mindestens Version 3.1, welches die Zugriffe auf Seiten, Artikel und Nachrichten z‰hlen kann.  
+Ein Modul f√ºr Contao ab mindestens Version 3.1, welches die Zugriffe auf Seiten, Artikel und Nachrichten z√§hlen kann.  
 Die hier vorliegende Version ist auf schachbund.de zwar schon im produktiven Einsatz, befindet sich aber noch in der Entwicklungsphase.
 
 ## Einbindung
 
-Counter besteht aus einem Z‰hler- und einem Ausgabemodul. Das Z‰hlermodul z‰hlt die Zugriffe und muﬂ **vor** dem Ausgabemodul im Seitenlayout oder in einer Seite eingebunden werden.
+Counter besteht aus einem Z√§hler- und einem Ausgabemodul. Das Z√§hlermodul z√§hlt die Zugriffe und mu√ü **vor** dem Ausgabemodul im Seitenlayout oder in einer Seite eingebunden werden.
 
-Diese beiden Frontendmodule finden Sie im Bereich **Counter** unter Themes -> Module. Das Z‰hlermodul m¸ssen Sie nur einmal einbinden, das Ausgabemodul kˆnnen Sie an beliebig vielen Stellen mit verschiedenen Templates einbinden.  
-Das Z‰hlermodul verwaltet die Daten in der Tabelle tl_fh_counter und schreibt zus‰tzlich die Daten der aktuellen Inhalte (Seite, Artikel, Nachricht) in $GLOBALS['fhcounter']. Dort werden sie vom Ausgabemodul weiter verwendet.
+Diese beiden Frontendmodule finden Sie im Bereich **Counter** unter Themes -> Module. Das Z√§hlermodul m√ºssen Sie nur einmal einbinden, das Ausgabemodul k√∂nnen Sie an beliebig vielen Stellen mit verschiedenen Templates einbinden.  
+Das Z√§hlermodul verwaltet die Daten in der Tabelle tl_fh_counter und schreibt zus√§tzlich die Daten der aktuellen Inhalte (Seite, Artikel, Nachricht) in $GLOBALS['fhcounter']. Dort werden sie vom Ausgabemodul weiter verwendet.
 
 ## Template-Variablen
 
-**ViewCounterinfo** (boolean): Kopfdaten des Z‰hlers vorhanden ja/nein
+**ViewCounterinfo** (boolean): Kopfdaten des Z√§hlers vorhanden ja/nein
 
-**ViewDiagrams** (boolean): Diagramme des Z‰hlers vorhanden ja/nein. Benˆtigt JQuery!
+**ViewDiagrams** (boolean): Diagramme des Z√§hlers vorhanden ja/nein. Ben√∂tigt JQuery!
 
-**CounterSource**: Name des Z‰hlers (tl_news, tl_article, tl_page)
+**CounterSource**: Name des Z√§hlers (tl_news, tl_article, tl_page)
 
 **CounterPid**: ID von CounterSource
 
-**CounterStarttime**: Timestamp der ersten Z‰hlung
+**CounterStarttime**: Timestamp der ersten Z√§hlung
 
-**CounterLastcounting**: Timestamp der letzten Z‰hlung
+**CounterLastcounting**: Timestamp der letzten Z√§hlung
 
-**CounterLastip**: IP-Adresse des letzten Besuchers, gez‰hlt oder nicht gez‰hlt. In der Regel sollte das die eigene IP sein.
+**CounterLastip**: IP-Adresse des letzten Besuchers, gez√§hlt oder nicht gez√§hlt. In der Regel sollte das die eigene IP sein.
 
 **CounterOnline**: Anzahl der aktuellen Besucher dieser URL
 
@@ -40,10 +40,10 @@ Das Z‰hlermodul verwaltet die Daten in der Tabelle tl_fh_counter und schreibt zu
 
 **CounterAverage**: Durchschnittliche Besucherzahl je Tag
 
-Das sind bei Weitem nicht alle Template-Variablen, aber die wichtigsten. Dar¸berhinaus sind die Templates noch nicht ausgereift und enthalten Fehler. Variablennamen kˆnnen sich noch ‰ndern oder werden nicht mehr benutzt.
+Das sind bei Weitem nicht alle Template-Variablen, aber die wichtigsten. Dar√ºberhinaus sind die Templates noch nicht ausgereift und enthalten Fehler. Variablennamen k√∂nnen sich noch √§ndern oder werden nicht mehr benutzt.
 
-Den o.g. Variablennamen kann auﬂerdem jeweils noch ein Pr‰fix mitgegeben werden. So zeigt **PageCounterAverage** z.B. die durchschnittliche Besucherzahl je Tag f¸r die aktive Seite, egal ob gerade ein Artikel oder eine Nachricht angezeigt wird. Die anderen Pr‰fixe sind **Article** und **News**.  
-Der allgemeine Z‰hler ohne Pr‰fix gewichtet die anderen Z‰hler in der Reihenfolge Seite, Artikel, Nachricht. Der allgemeine Z‰hler wird also zuerst mit den Daten der Seite gef¸llt und anschlieﬂend mit den Daten des Artikels ¸berschrieben - falls ¸berhaupt gerade ein Artikel angezeigt wird.
+Den o.g. Variablennamen kann au√üerdem jeweils noch ein Pr√§fix mitgegeben werden. So zeigt **PageCounterAverage** z.B. die durchschnittliche Besucherzahl je Tag f√ºr die aktive Seite, egal ob gerade ein Artikel oder eine Nachricht angezeigt wird. Die anderen Pr√§fixe sind **Article** und **News**.  
+Der allgemeine Z√§hler ohne Pr√§fix gewichtet die anderen Z√§hler in der Reihenfolge Seite, Artikel, Nachricht. Der allgemeine Z√§hler wird also zuerst mit den Daten der Seite gef√ºllt und anschlie√üend mit den Daten des Artikels √ºberschrieben - falls √ºberhaupt gerade ein Artikel angezeigt wird.
 
 ## Einstellungen von Contao
 
@@ -51,19 +51,19 @@ Counter arbeitet mit folgenden Frontend-Einstellungen offensichtlich einwandfrei
 
 **URLs umschreiben** = true
 **Auto_item aktivieren** = true
-**Die Sprache zur URL hinzuf¸gen** = false
+**Die Sprache zur URL hinzuf√ºgen** = false
 **Leere URLs nicht umleiten** = false
 **Ordner-URLs verwenden** = false
 **Keine Seitenaliase verwenden** = false
 
-Andere Einstellungen wurden noch nicht gen¸gend getestet. Solange aber nur Seiten gez‰hlt werden, sollte FH-Counter keine Probleme haben. Die ID der aktuellen Seite wird einem Modul von Contao zur Verf¸gung gestellt.
+Andere Einstellungen wurden noch nicht gen√ºgend getestet. Solange aber nur Seiten gez√§hlt werden, sollte FH-Counter keine Probleme haben. Die ID der aktuellen Seite wird einem Modul von Contao zur Verf√ºgung gestellt.
 
-Bei der Artikelz‰hlung holt sich der Z‰hler den Inhalt der GET-Variablen articles und ermittelt damit den gerade aktiven Artikel.
+Bei der Artikelz√§hlung holt sich der Z√§hler den Inhalt der GET-Variablen articles und ermittelt damit den gerade aktiven Artikel.
 
-Die Nachrichtenz‰hlung ist etwas komplizierter, da das Seitenalias frei w‰hlbar ist und Contao selbst keine Informationen zu einer angezeigten Nachricht liefert. Der Z‰hler ermittelt deshalb f¸r alle Nachrichten-Archive zuerst die Weiterleitungsseiten, also die Nachrichtenleser. Entspricht die aktive Seite so einem Nachrichtenleser, wird aus $_SERVER['REQUEST_URI'] der Nachrichten-Alias extrahiert und die Nachricht kann gez‰hlt werden.
+Die Nachrichtenz√§hlung ist etwas komplizierter, da das Seitenalias frei w√§hlbar ist und Contao selbst keine Informationen zu einer angezeigten Nachricht liefert. Der Z√§hler ermittelt deshalb f√ºr alle Nachrichten-Archive zuerst die Weiterleitungsseiten, also die Nachrichtenleser. Entspricht die aktive Seite so einem Nachrichtenleser, wird aus $_SERVER['REQUEST_URI'] der Nachrichten-Alias extrahiert und die Nachricht kann gez√§hlt werden.
 
 ## Fehler und Support
 
-Da Counter noch in der Entwicklungsphase ist und auch noch nicht im ER von Contao eingebunden wurde, halte ich mich mit Unterst¸tzung zur Erweiterung etwas zur¸ck. Mich kann man aber gern im Contao-Forum (Samson1964) oder hier auf GitHub kontaktieren.
+Da Counter noch in der Entwicklungsphase ist und auch noch nicht im ER von Contao eingebunden wurde, halte ich mich mit Unterst√ºtzung zur Erweiterung etwas zur√ºck. Mich kann man aber gern im Contao-Forum (Samson1964) oder hier auf GitHub kontaktieren.
 
 **Frank Hoppe**
