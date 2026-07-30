@@ -1,7 +1,14 @@
 {
     "name": "schachbulle/contao-counter-bundle",
     "type": "contao-bundle",
-    "description": "Zähler für Seiten, Nachrichten und Artikel für Contao 4",
+    "description": "Zählt die Zugriffe auf Seiten, Artikel und Nachrichten und gibt die Zahlen im Frontend aus.",
+    "keywords": [
+        "contao",
+        "zähler",
+        "statistik",
+        "zugriffe"
+    ],
+    "homepage": "https://github.com/Samson1964/contao-counter-bundle",
     "license": "LGPL-3.0-or-later",
     "authors": [
         {

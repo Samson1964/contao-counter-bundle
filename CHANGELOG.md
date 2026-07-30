@@ -1,5 +1,9 @@
 # Counter Changelog
 
+## Version 1.2.9 (2026-07-30)
+
+* Change: Beschreibung, Keywords und Homepage in der composer.json ergänzt, damit Packagist das Paket verständlich darstellt und über die Suche auffindbar macht
+
 ## Version 1.2.8 (2025-09-12)
 
 * Fix: Warning: Undefined array key \"111.48.114.208\" at src/Classes/Register.php:252
