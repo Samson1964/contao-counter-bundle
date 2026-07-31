@@ -38,13 +38,21 @@ $GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';'
 $GLOBALS['TL_DCA']['tl_settings']['palettes']['__selector__'][] = 'counter_mail';
 
 /**
- * Unterpalette: Die Adressfelder erscheinen erst, wenn der Versand
- * eingeschaltet ist — sonst stehen sieben Felder ohne Wirkung herum
+ * Unterpalette: Die Einstellungen erscheinen erst, wenn der Versand
+ * eingeschaltet ist — sonst stünden zehn Felder ohne Wirkung herum.
+ *
+ * Aufbau, Absender und Betreff gelten für alle drei Statistiken gemeinsam;
+ * die Empfänger werden je Inhaltsart getrennt gepflegt. Wer die Seiten-,
+ * Artikel- und Nachrichtenstatistik bekommt, ist selten dieselbe Runde.
+ * Eine Inhaltsart ohne Empfänger wird übersprungen — damit ist zugleich
+ * gesagt, welche Statistiken überhaupt hinausgehen.
  */
 $GLOBALS['TL_DCA']['tl_settings']['subpalettes']['counter_mail'] =
-	'counter_mail_quellen,counter_mail_anzahl,counter_mail_template,'
-	.'counter_mail_absender,counter_mail_absendername,'
-	.'counter_mail_empfaenger,counter_mail_kopie,counter_mail_betreff';
+	'counter_mail_anzahl,counter_mail_template,'
+	.'counter_mail_absender,counter_mail_absendername,counter_mail_betreff,'
+	.'counter_mail_empfaenger_page,counter_mail_kopie_page,'
+	.'counter_mail_empfaenger_article,counter_mail_kopie_article,'
+	.'counter_mail_empfaenger_news,counter_mail_kopie_news';
 
 /**
  * Felder
@@ -101,15 +109,6 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail'] = [
 	'eval'      => ['tl_class' => 'w50 m12', 'submitOnChange' => true],
 ];
 
-// Welche Inhaltsarten sollen verschickt werden?
-$GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_quellen'] = [
-	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_quellen'],
-	'inputType' => 'checkbox',
-	'options'   => ['tl_page', 'tl_article', 'tl_news'],
-	'reference' => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_quellen_optionen'],
-	'eval'      => ['multiple' => true, 'tl_class' => 'w50 clr'],
-];
-
 // Zahl der Listenplätze in der Mail
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_anzahl'] = [
 	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_anzahl'],
@@ -141,26 +140,39 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_absendername'] = [
 	'eval'      => ['maxlength' => 255, 'tl_class' => 'w50'],
 ];
 
-// Empfänger, mehrere durch Komma getrennt
-$GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_empfaenger'] = [
-	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_empfaenger'],
-	'inputType' => 'textarea',
-	'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'clr'],
-];
-
-// Empfänger in Kopie, mehrere durch Komma getrennt
-$GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_kopie'] = [
-	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_kopie'],
-	'inputType' => 'textarea',
-	'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'clr'],
-];
-
 // Fester Zusatz vor der Betreffzeile
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_betreff'] = [
 	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_betreff'],
 	'inputType' => 'text',
 	'eval'      => ['maxlength' => 128, 'tl_class' => 'w50 clr'],
 ];
+
+/**
+ * Empfänger je Inhaltsart.
+ *
+ * Die Namensendungen page, article und news entsprechen den Bezeichnern der
+ * Backend-Module; Cron\Statistikmail setzt daraus über Helper\Inhalte den
+ * Namen der Einstellung zusammen. Wer hier eine Endung ändert, muss dort
+ * nichts anpassen — wohl aber die Zuordnung in Helper\Inhalte.
+ */
+foreach (['page', 'article', 'news'] as $art)
+{
+	// Empfänger dieser Statistik, mehrere durch Komma oder Zeilenumbruch getrennt
+	$GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_empfaenger_'.$art] = [
+		'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_empfaenger_'.$art],
+		'inputType' => 'textarea',
+		'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'w50 clr'],
+	];
+
+	// Empfänger in Kopie
+	$GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_kopie_'.$art] = [
+		'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_kopie_'.$art],
+		'inputType' => 'textarea',
+		'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'w50'],
+	];
+}
+
+unset($art);
 
 /**
  * Hilfsmethoden für die Einstellungen des Zählers.

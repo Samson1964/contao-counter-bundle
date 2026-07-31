@@ -56,9 +56,14 @@ einschalten. Verschickt wird:
 * montags zusätzlich die der **vergangenen Woche** (Montag bis Sonntag),
 * am Monatsersten zusätzlich die des **Vormonats**.
 
-Je gewählter Inhaltsart geht eine eigene E-Mail hinaus. Empfänger, Kopieempfänger, Absender,
-Betreffzusatz und die Zahl der Listenplätze werden dort ebenfalls gepflegt. Ohne Empfänger
-wird nichts verschickt.
+Je Inhaltsart geht eine eigene E-Mail an einen **eigenen Verteiler** — wer die Seitenstatistik
+bekommt, ist selten dieselbe Runde wie beim Nachrichten-Ranking. Empfänger und Kopieempfänger
+werden deshalb für Seiten, Artikel und Nachrichten getrennt gepflegt; Absender, Betreffzusatz,
+Vorlage und die Zahl der Listenplätze gelten für alle drei gemeinsam.
+
+**Eine Inhaltsart ohne Empfänger wird übersprungen.** Damit ist zugleich gesagt, welche
+Statistiken überhaupt hinausgehen: Wer nur die Nachrichtenstatistik braucht, trägt allein dort
+Adressen ein und lässt die übrigen Felder leer.
 
 Das Layout steckt im Template `counter_mail_standard`. Eine eigene Fassung legen Sie unter
 `templates/` mit dem Namensanfang `counter_mail_` ab; sie erscheint dann in der Auswahlliste.

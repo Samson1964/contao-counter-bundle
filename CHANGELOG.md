@@ -1,5 +1,18 @@
 # Counter Changelog
 
+## Version 2.1.0 (2026-07-31)
+
+* Change: **Empfänger der Statistik-Mails werden je Inhaltsart getrennt gepflegt.**
+  Seiten, Artikel und Nachrichten haben nun eigene Felder für Empfänger und
+  Kopieempfänger; Absender, Betreffzusatz, Vorlage und die Zahl der Listenplätze
+  gelten weiterhin für alle drei gemeinsam
+* Change: Eine Inhaltsart ohne Empfänger wird übersprungen. Damit ist zugleich
+  gesagt, welche Statistiken hinausgehen — die frühere Auswahl „Inhalte“
+  (`counter_mail_quellen`) entfällt ersatzlos
+* Remove: Die Sammelfelder `counter_mail_empfaenger` und `counter_mail_kopie`
+  werden durch je drei Felder mit den Endungen `_page`, `_article` und `_news`
+  ersetzt. **Bereits eingetragene Adressen müssen einmalig neu verteilt werden**
+
 ## Version 2.0.2 (2026-07-31)
 
 Inhaltlich gleich mit der zurückgezogenen 2.0.1: Deren Tag war versehentlich auf

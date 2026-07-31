@@ -5,8 +5,11 @@
 de:
     title: Counter
     description: >
-        Zählt die Zugriffe auf Seiten, Artikel und Nachrichten und gibt die Zahlen im Frontend aus.
+        Zählt die Zugriffe auf Seiten, Artikel und Nachrichten, gibt die Zahlen im Frontend aus
+        und wertet sie im Backend als Bestenliste mit Verlaufsdiagramm aus. Auf Wunsch verschickt
+        ein täglicher Cronjob die Bestenlisten per E-Mail, je Inhaltsart an einen eigenen Verteiler.
     keywords:
         - Zähler
         - Statistik
         - Zugriffe
+        - Auswertung

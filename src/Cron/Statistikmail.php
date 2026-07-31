@@ -14,7 +14,6 @@ namespace Schachbulle\ContaoCounterBundle\Cron;
 use Contao\Config;
 use Contao\Email;
 use Contao\FrontendTemplate;
-use Contao\StringUtil;
 use Schachbulle\ContaoCounterBundle\Helper\Bestenliste;
 use Schachbulle\ContaoCounterBundle\Helper\Inhalte;
 use Schachbulle\ContaoCounterBundle\Helper\Protokoll;
@@ -34,9 +33,14 @@ use Schachbulle\ContaoCounterBundle\Helper\Protokoll;
  *   - montags    zusätzlich die der vergangenen Woche (Montag bis Sonntag)
  *   - am Ersten  zusätzlich die des Vormonats
  *
- * Alle Adressen und die Zahl der Listenplätze stehen unter
- * System -> Einstellungen im Bereich „Zähler“. Ohne Empfänger passiert
- * nichts — der Cronjob bricht dann still ab.
+ * Je Inhaltsart geht eine eigene E-Mail an einen eigenen Verteiler: Wer die
+ * Seitenstatistik bekommt, ist selten dieselbe Runde wie beim
+ * Nachrichten-Ranking. Aufbau, Absender und Betreffzusatz gelten dagegen für
+ * alle drei gemeinsam.
+ *
+ * Alles steht unter System -> Einstellungen im Bereich „Zähler“. Eine
+ * Inhaltsart ohne Empfänger wird übersprungen; ohne jeden Empfänger bricht der
+ * Cronjob still ab.
  */
 final class Statistikmail
 {
@@ -90,28 +94,53 @@ final class Statistikmail
 			return;
 		}
 
-		$empfaenger = self::adressen((string) Config::get('counter_mail_empfaenger'));
+		// Empfänger je Inhaltsart einsammeln. Eine Inhaltsart ohne Empfänger
+		// fällt heraus — damit ist zugleich gesagt, welche Statistiken
+		// überhaupt verschickt werden
+		$verteiler = [];
 
-		if (!$empfaenger)
+		foreach (Inhalte::QUELLEN as $quelle)
 		{
-			return;
+			$an = self::adressen(self::einstellung($quelle, 'counter_mail_empfaenger_'));
+
+			if ($an)
+			{
+				$verteiler[$quelle] = [
+					'an'    => $an,
+					'kopie' => self::adressen(self::einstellung($quelle, 'counter_mail_kopie_')),
+				];
+			}
 		}
 
-		$quellen = StringUtil::deserialize(Config::get('counter_mail_quellen'), true);
-		$quellen = array_values(array_intersect($quellen, Inhalte::QUELLEN));
-
-		if (!$quellen)
+		if (!$verteiler)
 		{
 			return;
 		}
 
 		foreach ($this->zeitraeume() as $zeitraum)
 		{
-			foreach ($quellen as $quelle)
+			foreach ($verteiler as $quelle => $adressen)
 			{
-				$this->versende($quelle, $zeitraum, $empfaenger);
+				$this->versende($quelle, $zeitraum, $adressen['an'], $adressen['kopie']);
 			}
 		}
+	}
+
+	/**
+	 * Liest eine Einstellung, deren Name auf die Inhaltsart endet.
+	 *
+	 * Die Endung ist der Bezeichner des Backend-Moduls (page, article, news),
+	 * damit die Namen der Einstellungen ohne zweite Zuordnungstabelle
+	 * auskommen — sie stehen bereits in Helper\Inhalte.
+	 *
+	 * @param string $quelle  Tabellenname: tl_page, tl_article oder tl_news
+	 * @param string $praefix Namensanfang der Einstellung, mit Unterstrich am Ende
+	 *
+	 * @return string Wert der Einstellung, leerer String wenn nicht gepflegt
+	 */
+	private static function einstellung(string $quelle, string $praefix): string
+	{
+		return (string) Config::get($praefix.Inhalte::eigenschaft($quelle, 'modul'));
 	}
 
 	/**
@@ -187,11 +216,12 @@ final class Statistikmail
 	 *
 	 * @param string $quelle     Tabellenname: tl_page, tl_article oder tl_news
 	 * @param array  $zeitraum   Eintrag aus zeitraeume()
-	 * @param array  $empfaenger Empfängeradressen
+	 * @param array  $empfaenger Empfängeradressen dieser Inhaltsart, nie leer
+	 * @param array  $kopie      Adressen, die eine Kopie erhalten; darf leer sein
 	 *
 	 * @return void
 	 */
-	private function versende(string $quelle, array $zeitraum, array $empfaenger): void
+	private function versende(string $quelle, array $zeitraum, array $empfaenger, array $kopie = []): void
 	{
 		$anzahl = (int) (Config::get('counter_mail_anzahl') ?: 50);
 		$ergebnis = Bestenliste::auswerten($quelle, $zeitraum['pfade'], $anzahl);
@@ -220,8 +250,6 @@ final class Statistikmail
 		$mail->fromName = (string) (Config::get('counter_mail_absendername') ?: 'Webstatistik');
 		$mail->subject = trim((string) Config::get('counter_mail_betreff').' '.$titel);
 		$mail->html = $template->parse();
-
-		$kopie = self::adressen((string) Config::get('counter_mail_kopie'));
 
 		if ($kopie)
 		{
