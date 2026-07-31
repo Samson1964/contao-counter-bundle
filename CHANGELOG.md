@@ -1,6 +1,11 @@
 # Counter Changelog
 
-## Version 2.0.1 (2026-07-31)
+## Version 2.0.2 (2026-07-31)
+
+Inhaltlich gleich mit der zurückgezogenen 2.0.1: Deren Tag war versehentlich auf
+den Stand von 2.0.0 gesetzt worden. Packagist hatte die falsche Zuordnung bereits
+zwischengespeichert und liest einen einmal bekannten Tag nicht neu ein, deshalb
+ist 2.0.1 ersatzlos entfallen.
 
 * Fix: Der Haken „Statistik per E-Mail verschicken“ unter System &rarr; Einstellungen
   ließ sich nicht setzen — die Meldung „Die Daten werden geladen …“ blieb stehen
