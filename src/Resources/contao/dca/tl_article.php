@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 
 $GLOBALS['TL_DCA']['tl_article']['list']['global_operations']['counter_articles'] = [
-	'label'      => ($GLOBALS['TL_LANG']['tl_article']['counter_articles'] ?? null),
+	'label'      => &$GLOBALS['TL_LANG']['tl_article']['counter_articles'],
 	'href'       => 'key=counter',
 	'icon'       => 'bundles/contaocounter/images/counter.png',
 	'attributes' => 'onclick="Backend.getScrollOffset();"',

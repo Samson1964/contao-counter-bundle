@@ -1,5 +1,20 @@
 # Counter Changelog
 
+## Version 2.0.1 (2026-07-31)
+
+* Fix: Der Haken „Statistik per E-Mail verschicken“ unter System &rarr; Einstellungen
+  ließ sich nicht setzen — die Meldung „Die Daten werden geladen …“ blieb stehen
+  und der Ajax-Aufruf endete mit HTTP 400. Das Feld war als Umschalter für eine
+  Unterpalette gedacht, aber nicht als Auswahlfeld angemeldet; Contao weist einen
+  `toggleSubpalette`-Aufruf ab, wenn das Feld nicht in
+  `$GLOBALS['TL_DCA'][…]['palettes']['__selector__']` steht
+* Fix: Beschriftungen der DCA-Felder wieder als Referenz eingebunden
+  (`&$GLOBALS['TL_LANG'][…]`). In Fassung 2.0.0 standen dort abgesicherte
+  Lesezugriffe, die den Wert beim Laden des DCA einfrieren — je nach
+  Ladereihenfolge wären Feldbeschriftungen und die Klartexte der Optionen leer
+  geblieben. Die Referenzform erzeugt auch beim `contao:migrate` ohne
+  Sprachdateien keine Warnungen (nachgemessen)
+
 ## Version 2.0.0 (2026-07-31)
 
 Diese Fassung setzt Contao 4.13 oder Contao 5 und PHP 7.4 oder neuer voraus.

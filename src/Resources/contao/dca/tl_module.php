@@ -8,9 +8,12 @@ declare(strict_types=1);
  * @author    Frank Hoppe
  * @license   LGPL-3.0-or-later
  *
- * Hinweis zu den Labels: Sie werden bewusst NICHT als Referenz eingebunden.
- * Der DcaLoader lädt beim Aufruf von contao:migrate keine Sprachdateien, und
- * ein Referenzzugriff auf einen fehlenden Schlüssel erzeugt dort Warnungen.
+ * Hinweis zu den Labels: Sie werden als Referenz eingebunden (&$GLOBALS[…]).
+ * Das ist wichtig, weil der DcaLoader beim Aufruf von contao:migrate keine
+ * Sprachdateien lädt: Ein Referenzzugriff auf einen fehlenden Schlüssel legt
+ * ihn stillschweigend an und trägt die Beschriftung nach, sobald die
+ * Sprachdatei kommt. Ein lesender Zugriff — auch mit „?? null“ abgesichert —
+ * würde den Wert dagegen beim Laden des DCA einfrieren.
  */
 
 use Contao\Backend;
@@ -38,7 +41,7 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['fhcounter_view'] =
 
 // Zählung tl_page ja/nein
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_pages'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_register_pages'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_register_pages'],
 	'inputType' => 'checkbox',
 	'default'   => true,
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
@@ -47,7 +50,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_pages'] = [
 
 // Zählung tl_article ja/nein
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_articles'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_register_articles'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_register_articles'],
 	'inputType' => 'checkbox',
 	'default'   => true,
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
@@ -56,7 +59,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_articles'] = [
 
 // Zählung tl_news ja/nein
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_news'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_register_news'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_register_news'],
 	'inputType' => 'checkbox',
 	'default'   => true,
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
@@ -65,7 +68,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_news'] = [
 
 // Sekunden, die ein Besucher als online gilt
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_onlinetime'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_onlinetime'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_onlinetime'],
 	'inputType' => 'text',
 	'default'   => '120',
 	'eval'      => ['rgxp' => 'digit', 'tl_class' => 'w50 clr'],
@@ -74,7 +77,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_onlinetime'] = [
 
 // Sekunden, nach denen ein Besucher erneut gezählt wird
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_registernewtime'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_registernewtime'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_registernewtime'],
 	'inputType' => 'text',
 	'default'   => '900',
 	'eval'      => ['rgxp' => 'digit', 'tl_class' => 'w50'],
@@ -83,7 +86,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_registernewtime'] = [
 
 // Angemeldete Backend-Benutzer mitzählen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_be_user'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_register_be_user'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_register_be_user'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50 clr', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -95,7 +98,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_register_be_user'] = [
 
 // Tausenderpunkte setzen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_1000_separator'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_1000_separator'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_1000_separator'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -103,7 +106,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_1000_separator'] = [
 
 // Allgemeine Zählerinformationen anzeigen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_infos_counter'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_infos_counter'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_infos_counter'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50 clr', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -111,7 +114,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_infos_counter'] = [
 
 // Diagnoseangaben anzeigen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_infos_debug'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_infos_debug'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_infos_debug'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -119,7 +122,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_infos_debug'] = [
 
 // Zähler tl_page bei der Ausgabe berücksichtigen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_pages'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_view_pages'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_view_pages'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -127,7 +130,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_pages'] = [
 
 // Zähler tl_article bei der Ausgabe berücksichtigen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_articles'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_view_articles'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_view_articles'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -135,7 +138,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_articles'] = [
 
 // Zähler tl_news bei der Ausgabe berücksichtigen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_news'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_view_news'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_view_news'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -143,7 +146,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_news'] = [
 
 // Diagramme des Standardzählers anzeigen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_diagrams'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_view_diagrams'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_view_diagrams'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50 clr', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -151,7 +154,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_diagrams'] = [
 
 // Tabellen aller Zähler anzeigen
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_tables'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_module']['fhc_view_tables'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['fhc_view_tables'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50', 'isBoolean' => true],
 	'sql'       => "char(1) NOT NULL default ''",
@@ -159,7 +162,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_view_tables'] = [
 
 // Ausgabetemplate
 $GLOBALS['TL_DCA']['tl_module']['fields']['fhc_template'] = [
-	'label'            => ($GLOBALS['TL_LANG']['tl_module']['fhc_template'] ?? null),
+	'label'            => &$GLOBALS['TL_LANG']['tl_module']['fhc_template'],
 	'exclude'          => true,
 	'inputType'        => 'select',
 	'options_callback' => ['tl_module_fhcounter', 'getCounterTemplates'],

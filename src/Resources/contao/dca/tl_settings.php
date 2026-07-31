@@ -8,9 +8,12 @@ declare(strict_types=1);
  * @author    Frank Hoppe
  * @license   LGPL-3.0-or-later
  *
- * Hinweis zu den Labels: Sie werden bewusst NICHT als Referenz eingebunden.
- * Der DcaLoader lädt beim Aufruf von contao:migrate keine Sprachdateien, und
- * ein Referenzzugriff auf einen fehlenden Schlüssel erzeugt dort Warnungen.
+ * Hinweis zu den Labels: Sie werden als Referenz eingebunden (&$GLOBALS[…]).
+ * Das ist wichtig, weil der DcaLoader beim Aufruf von contao:migrate keine
+ * Sprachdateien lädt: Ein Referenzzugriff auf einen fehlenden Schlüssel legt
+ * ihn stillschweigend an und trägt die Beschriftung nach, sobald die
+ * Sprachdatei kommt. Ein lesender Zugriff — auch mit „?? null“ abgesichert —
+ * würde den Wert dagegen beim Laden des DCA einfrieren.
  */
 
 use Contao\Backend;
@@ -21,6 +24,18 @@ use Contao\Backend;
 $GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';'
 	.'{counter_legend:hide},counter_topx_pages,counter_topx_articles,counter_topx_news,counter_donotlog404,counter_donotlogid;'
 	.'{counter_mail_legend:hide},counter_mail';
+
+/**
+ * Auswahlfeld anmelden.
+ *
+ * Ohne diesen Eintrag lehnt Contao das Ein- und Ausklappen der Unterpalette mit
+ * „Bad request“ (HTTP 400) ab: Ajax::executePostActions prüft bei
+ * toggleSubpalette, ob das Feld in __selector__ steht, und bricht sonst ab.
+ * Im Backend hängt dann die Meldung „Die Daten werden geladen …“ endlos.
+ * Die Zuweisung mit [] ist Absicht — tl_settings bringt von Haus aus keine
+ * Selektorenliste mit, andere Erweiterungen können aber schon eine angelegt haben.
+ */
+$GLOBALS['TL_DCA']['tl_settings']['palettes']['__selector__'][] = 'counter_mail';
 
 /**
  * Unterpalette: Die Adressfelder erscheinen erst, wenn der Versand
@@ -37,7 +52,7 @@ $GLOBALS['TL_DCA']['tl_settings']['subpalettes']['counter_mail'] =
 
 // Zahl der Einträge in der Seiten-Bestenliste
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_topx_pages'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_topx_pages'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_topx_pages'],
 	'exclude'   => true,
 	'inputType' => 'select',
 	'default'   => 100,
@@ -47,7 +62,7 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_topx_pages'] = [
 
 // Zahl der Einträge in der Artikel-Bestenliste
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_topx_articles'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_topx_articles'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_topx_articles'],
 	'exclude'   => true,
 	'inputType' => 'select',
 	'default'   => 100,
@@ -57,7 +72,7 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_topx_articles'] = [
 
 // Zahl der Einträge in der Nachrichten-Bestenliste
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_topx_news'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_topx_news'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_topx_news'],
 	'exclude'   => true,
 	'inputType' => 'select',
 	'default'   => 100,
@@ -67,37 +82,37 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_topx_news'] = [
 
 // Fehler 404 nicht im Systemprotokoll vermerken
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_donotlog404'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_donotlog404'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_donotlog404'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50 m12 clr'],
 ];
 
 // Fehlende Quell-ID nicht im Systemprotokoll vermerken
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_donotlogid'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_donotlogid'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_donotlogid'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50 m12'],
 ];
 
 // Hauptschalter des täglichen Mailversands
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail'],
 	'inputType' => 'checkbox',
 	'eval'      => ['tl_class' => 'w50 m12', 'submitOnChange' => true],
 ];
 
 // Welche Inhaltsarten sollen verschickt werden?
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_quellen'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_quellen'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_quellen'],
 	'inputType' => 'checkbox',
 	'options'   => ['tl_page', 'tl_article', 'tl_news'],
-	'reference' => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_quellen_optionen'] ?? null),
+	'reference' => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_quellen_optionen'],
 	'eval'      => ['multiple' => true, 'tl_class' => 'w50 clr'],
 ];
 
 // Zahl der Listenplätze in der Mail
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_anzahl'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_anzahl'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_anzahl'],
 	'inputType' => 'select',
 	'default'   => 50,
 	'options'   => [10, 20, 25, 50, 100],
@@ -106,7 +121,7 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_anzahl'] = [
 
 // Vorlage der Mail
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_template'] = [
-	'label'            => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_template'] ?? null),
+	'label'            => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_template'],
 	'inputType'        => 'select',
 	'options_callback' => ['tl_settings_counter', 'getMailTemplates'],
 	'eval'             => ['tl_class' => 'w50 clr', 'includeBlankOption' => true],
@@ -114,35 +129,35 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_template'] = [
 
 // Absenderadresse
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_absender'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_absender'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_absender'],
 	'inputType' => 'text',
 	'eval'      => ['rgxp' => 'email', 'maxlength' => 255, 'tl_class' => 'w50 clr'],
 ];
 
 // Absendername
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_absendername'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_absendername'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_absendername'],
 	'inputType' => 'text',
 	'eval'      => ['maxlength' => 255, 'tl_class' => 'w50'],
 ];
 
 // Empfänger, mehrere durch Komma getrennt
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_empfaenger'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_empfaenger'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_empfaenger'],
 	'inputType' => 'textarea',
 	'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'clr'],
 ];
 
 // Empfänger in Kopie, mehrere durch Komma getrennt
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_kopie'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_kopie'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_kopie'],
 	'inputType' => 'textarea',
 	'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'clr'],
 ];
 
 // Fester Zusatz vor der Betreffzeile
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_betreff'] = [
-	'label'     => ($GLOBALS['TL_LANG']['tl_settings']['counter_mail_betreff'] ?? null),
+	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_betreff'],
 	'inputType' => 'text',
 	'eval'      => ['maxlength' => 128, 'tl_class' => 'w50 clr'],
 ];
