@@ -1,99 +1,93 @@
 <?php
 
+declare(strict_types=1);
+
 /**
- * Contao Open Source CMS
+ * Counter für Contao Open Source CMS
  *
- * Copyright (c) 2005-2014 Leo Feyer
- *
- * @package   fh-counter
  * @author    Frank Hoppe
- * @license   GNU/LGPL
- * @copyright Frank Hoppe 2014
+ * @license   LGPL-3.0-or-later
+ *
+ * Tabelle tl_fh_counter — je Inhalt ein Zähler.
+ *
+ * Die Tabelle wird nie im Backend bearbeitet, deshalb enthält der DCA nur die
+ * Feldbeschreibungen für den Datenbankabgleich (contao:migrate).
  */
 
+$GLOBALS['TL_DCA']['tl_fh_counter'] = [
 
-/**
- * Table tl_fh-counter
- */
-$GLOBALS['TL_DCA']['tl_fh_counter'] = array
-(
+	'config' => [
+		'sql' => [
+			'keys' => [
+				'id' => 'primary',
+				// Verbundindex über beide Bedingungen der Zählerabfrage. Vorher
+				// gab es zwei Einzelindizes, die MySQL zusammenführen musste;
+				// jetzt findet die Abfrage den Datensatz mit einem Zugriff
+				'source,pid' => 'index',
+			],
+		],
+	],
 
-	// Config
-	'config' => array
-	(
-		'sql' => array
-		(
-			'keys' => array
-			(
-				'id'     => 'primary',
-				'pid'    => 'index',
-				'source' => 'index'
-			)
-		)
-	),
+	'fields' => [
 
-	// Fields
-	'fields' => array
-	(
-		'id' => array
-		(
-			'sql'                     => "int(10) unsigned NOT NULL auto_increment"
-		),
-		// Zeitstempel, der bei jedem Schreibzugriff aktualisiert wird
-		'tstamp' => array
-		(
-			'sql'                     => "int(10) unsigned NOT NULL default '0'"
-		),
+		'id' => [
+			'sql' => "int(10) unsigned NOT NULL auto_increment",
+		],
 
-		// Erststart dieses Z�hlers (timestamp)
-		'starttime' => array
-		(
-			'sql'                     => "int(10) unsigned NOT NULL default '0'"
-		),
-		// Z�hlerquelle: tL_news, tl_page usw.
-		'source' => array
-		(
-			'sql'                     => "varchar(255) NOT NULL default ''"
-		),
-		// ID der Z�hlerquelle
-		'pid' => array
-		(
-			'sql'                     => "int(10) unsigned NOT NULL default '0'"
-		),
-		// Gesamtzugriffe dieses Z�hlers (spart die Dekodierung vom Feld counter)
-		'totalhits' => array
-		(
-			'sql'                     => "int(10) unsigned NOT NULL default '0'"
-		),
-		// Letzte IP-Adresse (spart die Dekodierung vom Feld iparray)
-		'lastip' => array
-		(
-			'sql'                     => "varchar(50) NOT NULL default ''"
-		),
-		// Letzte Z�hlung
-		'lastcounting' => array
-		(
-			'sql'                     => "int(10) unsigned NOT NULL default '0'"
-		),
-		// Topwert Besucher online (serialisiertes Array)
-		'toponline' => array
-		(
-			'sql'                     => "text NULL"
-		),
-		// Letzte IP-Adressen (serialisiertes Array)
-		'iparray' => array
-		(
-			'sql'                     => "text NULL"
-		),
-		// Z�hler (serialisiertes Array)
-		'counter' => array
-		(
-			'sql'                     => "mediumtext NULL"
-		),
-		// Besucher online (serialisiertes Array)
-		'online' => array
-		(
-			'sql'                     => "text NULL"
-		),
-	)
-);
+		// Zeitstempel des letzten Schreibzugriffs
+		'tstamp' => [
+			'sql' => "int(10) unsigned NOT NULL default '0'",
+		],
+
+		// Erststart dieses Zählers
+		'starttime' => [
+			'sql' => "int(10) unsigned NOT NULL default '0'",
+		],
+
+		// Quelltabelle: tl_page, tl_article oder tl_news
+		'source' => [
+			'sql' => "varchar(64) NOT NULL default ''",
+		],
+
+		// ID des Inhalts in seiner Quelltabelle
+		'pid' => [
+			'sql' => "int(10) unsigned NOT NULL default '0'",
+		],
+
+		// Gesamtzugriffe, damit für die reine Summe das Zählerarray nicht
+		// entpackt werden muss
+		'totalhits' => [
+			'sql' => "int(10) unsigned NOT NULL default '0'",
+		],
+
+		// Zuletzt gesehene IP-Adresse
+		'lastip' => [
+			'sql' => "varchar(50) NOT NULL default ''",
+		],
+
+		// Zeitpunkt der letzten gewerteten Zählung
+		'lastcounting' => [
+			'sql' => "int(10) unsigned NOT NULL default '0'",
+		],
+
+		// Bestmarke gleichzeitiger Besucher (serialisiertes Array)
+		'toponline' => [
+			'sql' => "text NULL",
+		],
+
+		// IP-Adressen innerhalb der Sperrzeit (serialisiertes Array)
+		'iparray' => [
+			'sql' => "text NULL",
+		],
+
+		// Zählstände nach Jahr/Monat/Tag/Stunde (serialisiertes Array)
+		'counter' => [
+			'sql' => "mediumtext NULL",
+		],
+
+		// Besucher innerhalb der Onlinezeit (serialisiertes Array)
+		'online' => [
+			'sql' => "text NULL",
+		],
+	],
+];

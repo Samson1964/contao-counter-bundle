@@ -1,5 +1,73 @@
 # Counter Changelog
 
+## Version 2.0.0 (2026-07-31)
+
+Diese Fassung setzt Contao 4.13 oder Contao 5 und PHP 7.4 oder neuer voraus.
+Nach dem Einspielen sind ein Datenbankabgleich (`contao:migrate`) und
+`contao:assets:install` nötig.
+
+* Add: Zugriffsstatistik auch für **Artikel** (Artikel &rarr; Statistik)
+* Add: Verlaufsdiagramm in allen drei Backend-Statistiken — Stunden eines Tages,
+  Tage eines Monats, Monate eines Jahres, als SVG ohne Javascript
+* Add: Neue Kopfnavigation der Statistiken mit Tag/Monat/Jahr-Umschaltung,
+  Vor- und Zurückschritt sowie Gesamtzahl der Zugriffe im Zeitraum
+* Add: Täglicher Cronjob verschickt die Bestenlisten per E-Mail (Vortag, montags
+  die Vorwoche, am Monatsersten der Vormonat). Ersetzt die drei externen Skripte
+  in `web/php`, die seit Contao 4.5 nicht mehr lauffähig waren
+* Add: Einstellungen für den Mailversand unter System &rarr; Einstellungen
+  (Inhalte, Listenplätze, Vorlage, Absender, Empfänger, Kopie, Betreffzusatz)
+* Add: Mailvorlage `counter_mail_standard`; eigene Fassungen mit dem Namensanfang
+  `counter_mail_` unter `templates/` erscheinen in der Auswahlliste
+* Add: Einstellung `counter_topx_articles` für die Länge der Artikel-Bestenliste
+* Add: Englische Sprachdateien für Einstellungen, Module und Modulfelder
+* Fix: **Der erste Zugriff eines Tages ging verloren.** Tages- und Stundenwert
+  wurden beim Anlegen auf 0 statt auf 1 gesetzt, wodurch Tages- und Monatssumme
+  nicht mehr zusammenpassten
+* Fix: Datum in der Seitenstatistik las die nicht vorhandene Spalte `tl_page.date`
+  und blieb deshalb leer — jetzt wird `tstamp` verwendet
+* Fix: `CounterCheck` im Standardzähler las `$GLOBALS['fhcounter']['tl_default']`
+  (Schreibfehler) und war deshalb immer leer
+* Fix: Durchschnitt je Tag lieferte bei Zählern unter einem Tag Alter absurd
+  hohe Werte
+* Fix: Diagramme im Frontend blieben leer — die eingebundene Javascript-Bibliothek
+  „flot“ wurde über Contao-3-Pfade geladen, die seit Contao 4 ins Leere zeigen
+* Change: Contao-5-Tauglichkeit — `TL_MODE`, `REQUEST_TOKEN`, `System::log()`,
+  `ampersand()`, `Environment::getInstance()` und die globalen Klassenaliase
+  ersetzt; Backend-Benutzer werden über den TokenChecker erkannt
+* Change: Die Zähllogik lag wortgleich im Zählermodul und in der Insert-Tag-Klasse.
+  Sie steht jetzt einmal in `Helper\Zaehlwerk`; die Aufbereitung der
+  Template-Variablen (vorher achtfach kopiert) in `Helper\Auswertung`
+* Change: Deutlich weniger Datenbankabfragen — Verbundindex über `source` und `pid`,
+  gezielte Spaltenauswahl statt `SELECT *`, keine Abfrage mehr für abgeschaltete
+  Inhaltsarten, Artikelsuche nur bei vorhandenem URL-Parameter, und in den
+  Statistiken eine Abfrage für die Bezeichnungen statt einer je gezähltem Datensatz
+* Change: Wiederkehrer innerhalb der Sperrzeit lösen kein Schreiben des großen
+  Zählerfelds mehr aus
+* Change: Statistiken werden im laufenden Zeitraum eine Stunde, in abgeschlossenen
+  Zeiträumen einen Tag zwischengespeichert
+* Change: Backend-Statistiken im Stil des Wertungsportal-Bundles, eigene
+  `backend.css`, die nur noch im Backend geladen wird
+* Change: `tl_fh_counter` und `tl_module` als UTF-8 gespeichert (die Kommentare
+  waren unlesbar), Datenbankfelder `source` und `fhc_template` auf 64 Zeichen
+* Remove: Abhängigkeit von `schachbulle/contao-helper-bundle`. Es wurde nur für
+  den Zwischenspeicher der Statistiken gebraucht, ist aber an Contao 4 gebunden
+  und hätte Contao 5 verhindert. An seine Stelle tritt Symfonys Dateispeicher,
+  den beide Contao-Fassungen mitbringen. Der Zwischenspeicher liegt jetzt unter
+  `var/cache` und wird beim Leeren des Contao-Caches mit geleert
+* Remove: `_instanceof`-Block aus der `services.yml` — er verwies auf
+  `ContainerAwareInterface`, das es seit Symfony 7 nicht mehr gibt, und
+  verhinderte dadurch den Containerbau unter Contao 5. Keine Klasse dieser
+  Erweiterung setzte die dort genannten Schnittstellen um
+* Remove: `public/statistik.php` — band Contao über `system/initialize.php` ein
+  und war seit Contao 4.5 nicht mehr lauffähig
+* Remove: Javascript-Bibliothek `flot` samt jQuery-Abhängigkeit
+* Remove: Tote Templates `mod_fhcounter` und `fhcounterdetails_full` sowie die
+  Sprachdateien der nie existierenden Tabelle `tl_fh-counter`
+* Remove: Bilder `plus.png` und `minus.png` — die Vor- und Zurückschritte der
+  neuen Kopfnavigation kommen ohne Grafiken aus
+* Remove: Moduleinstellung „Session-Cookie benutzen“ (`fhc_register_sessions`) —
+  sie wurde nie ausgewertet
+
 ## Version 1.2.9 (2026-07-30)
 
 * Change: Beschreibung, Keywords und Homepage in der composer.json ergänzt, damit Packagist das Paket verständlich darstellt und über die Suche auffindbar macht

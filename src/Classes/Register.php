@@ -1,372 +1,114 @@
 <?php
 
+declare(strict_types=1);
+
 /**
- * Contao Open Source CMS
+ * Counter für Contao Open Source CMS
  *
- * Copyright (c) 2005-2014 Leo Feyer
- *
- * @package   fh-counter
  * @author    Frank Hoppe
- * @license   GNU/LGPL
- * @copyright Frank Hoppe 2014
+ * @license   LGPL-3.0-or-later
  */
 
 namespace Schachbulle\ContaoCounterBundle\Classes;
 
+use Contao\BackendTemplate;
+use Contao\Module;
+use Contao\System;
+use Schachbulle\ContaoCounterBundle\Helper\Zaehlwerk;
+
 /**
- * Class CounterRegister
+ * Frontend-Modul „Zählermodul“.
  *
- * @copyright  Frank Hoppe 2014
- * @author     Frank Hoppe
+ * Zählt den Aufruf der aktuellen Seite und — sofern angezeigt — des aktuellen
+ * Artikels und der aktuellen Nachricht. Das Modul gibt selbst nichts aus; es
+ * muss lediglich im Seitenlayout vor dem Ausgabemodul stehen, weil dieses die
+ * Zahlen aus $GLOBALS['fhcounter'] übernimmt.
  *
- * Basisklasse vom FH-Counter
- * Erledigt die Zählung der jeweiligen Contenttypen und schreibt die Zählerwerte in $GLOBALS
+ * Die eigentliche Arbeit macht Helper\Zaehlwerk. Diese Klasse reicht nur die
+ * Moduleinstellungen weiter.
  */
-class Register extends \Module
+class Register extends Module
 {
-
-	// Zeitwerte anlegen
-	var $zeit;
-	var $jahr;
-	var $monat;
-	var $tag;
-	var $stunde;
-
-	// Backend-Status
-	var $be_user;
-
 	/**
-	 * Display a wildcard in the back end
-	 * @return string
+	 * Zeigt im Backend einen Platzhalter statt der Modulausgabe.
+	 *
+	 * Contao ruft generate() auch in der Modulübersicht des Backends auf. Dort
+	 * darf natürlich nicht gezählt werden, deshalb der Umweg über den
+	 * Geltungsbereich des Requests. Die früher übliche Konstante TL_MODE gibt
+	 * es in Contao 5 nicht mehr.
+	 *
+	 * @return string Platzhalter im Backend, sonst die reguläre Modulausgabe
+	 *                (die hier leer ist, weil das Modul nur zählt)
 	 */
 	public function generate()
 	{
-		if (TL_MODE == 'BE')
+		if (self::istBackend())
 		{
-			$objTemplate = new \BackendTemplate('be_fhcounter');
+			$objTemplate = new BackendTemplate('be_fhcounter');
 
-			$objTemplate->wildcard = '### FH-COUNTER ZÄHLERMODUL ###';
+			$objTemplate->wildcard = '### COUNTER ZÄHLERMODUL ###';
 			$objTemplate->title = $this->name;
 			$objTemplate->id = $this->id;
 
 			return $objTemplate->parse();
 		}
 
-		return parent::generate(); // Weitermachen mit dem Modul
+		return parent::generate();
 	}
 
 	/**
-	 * Generate the module
+	 * Führt die Zählung durch.
+	 *
+	 * Zusätzlich wird ein Aufruf der 404-Seite im Systemprotokoll vermerkt,
+	 * weil Contao selbst nicht festhält, welche Adresse ins Leere lief.
+	 *
+	 * @return void Seiteneffekte: schreibt in tl_fh_counter, füllt
+	 *              $GLOBALS['fhcounter'] und protokolliert gegebenenfalls
 	 */
 	protected function compile()
 	{
-		global $objPage;
+		Zaehlwerk::protokolliere404($GLOBALS['objPage'] ?? null);
 
-		$this->ip = $_SERVER['REMOTE_ADDR']; // IP-Adresse des aktuellen Benutzers
+		$zaehlwerk = new Zaehlwerk(
+			(int) $this->fhc_onlinetime,
+			(int) $this->fhc_registernewtime,
+			(bool) $this->fhc_register_be_user
+		);
 
-		// Aktuelle Zeitwerte zuweisen
-		$this->zeit = time();
-		$this->jahr = date("Y",$this->zeit); // Jahr vierstellig
-		$this->monat = date("n",$this->zeit); // Monat einstellig
-		$this->tag = date("j",$this->zeit); // Tag einstellig
-		$this->stunde = date("G",$this->zeit); // Stunde einstellig
-		// Gestern-Zeitwerte zuweisen
-		$gestern = $this->zeit - 86400;
-		$gjahr = date("Y",$gestern); // Jahr vierstellig
-		$gmonat = date("n",$gestern); // Monat einstellig
-		$gtag = date("j",$gestern);	// Tag einstellig
-
-		// Zählstatus anpassen, je nachdem ob BE-Benutzer gezählt werden oder nicht
-		$this->be_user = false;
-		if(!$this->fhc_register_be_user)
-		{
-			// BE-Benutzer soll nicht mitgezählt werden
-			$objUser = \BackendUser::getInstance();
-			if($objUser->username)
-			{
-				// BE-Benutzer ist eingeloggt, deshalb Zählung deaktivieren
-				$this->fhc_register_pages = false;
-				$this->fhc_register_articles = false;
-				$this->fhc_register_news = false;
-				$this->be_user = true;
-			}
-		}
-
-		/*****************************************
-		****** Zählung der Seite (tl_page) *******
-		******************************************/
-		if($objPage->type == 'error_404' && $_SERVER['REQUEST_URI'])
-		{
-			$log = $_SERVER['REQUEST_URI'];
-			$log .= ' --- IP='.$_SERVER['REMOTE_ADDR'];
-			$log .= ' --- AGENT='.$_SERVER['HTTP_USER_AGENT'];
-			// Log-Eintrag machen, da Seite nicht gefunden wurde und Referer vorhanden ist
-			if(!isset($GLOBALS['TL_CONFIG']['counter_donotlog404'])) \System::log('Fehler 404: '.$log, __CLASS__.'::'.__FUNCTION__, TL_ERROR);
-		}
-		$this->RegisterCounter($objPage->id, 'tl_page', $this->fhc_register_pages);
-
-		/*****************************************
-		*** Zählung des Artikels (tl_article) ****
-		******************************************/
-		$alias_article = \Input::get('articles');
-		$objArticleModel = \ArticleModel::findByIdOrAlias($alias_article);
-		if($objArticleModel)
-		{
-			$id_article = $objArticleModel->id;
-			if($id_article) $this->RegisterCounter($id_article, 'tl_article', $this->fhc_register_articles);
-		}
-
-		/*****************************************
-		*** Zählung der Nachricht (tl_news) ******
-		******************************************/
-
-		$objNews = $this->Database->prepare('SELECT * FROM tl_news_archive')->execute();
-		$nachrichtenleser = array();
-		while($objNews->next())
-		{
-			$nachrichtenleser[] = $objNews->jumpTo;
-		}
-		// Ist die aktuelle Seiten-ID ein Nachrichtenleser?
-		if(in_array($objPage->id,$nachrichtenleser))
-		{
-			// Ja! Jetzt URL abfragen nach Alias
-			// Einfaches Regex: Was steht zwischen Alias und Suffix?
-			$urlsuffix = $GLOBALS['TL_CONFIG']['urlSuffix'];
-			$uri = $_SERVER['REQUEST_URI']; // URI laden
-			$newsalias = '';
-			if(substr($uri,-strlen($urlsuffix)) == $urlsuffix)
-			{
-				// Suffix steht am Ende der URI, dann News-Alias extrahieren
-				$newsalias = substr($uri,strlen($objPage->alias)+2,-strlen($urlsuffix));
-			}
-			// ID für diese Nachricht holen
-			if($newsalias)
-			{
-				$objNews = $this->Database->prepare('SELECT * FROM tl_news WHERE alias=?')->execute($newsalias);
-				$this->RegisterCounter($objNews->id, 'tl_news', $this->fhc_register_news);
-			}
-		}
-
+		$zaehlwerk->zaehleAufruf(
+			(bool) $this->fhc_register_pages,
+			(bool) $this->fhc_register_articles,
+			(bool) $this->fhc_register_news
+		);
 	}
 
 	/**
-	 * Funktion RegisterCounter
+	 * Prüft, ob der aktuelle Request zum Backend gehört.
 	 *
-	 * @param $source_id: ID in Tabelle $source_name
-	 * @param $source_name: tl_page, tl_articles oder tl_news
-	 * @param $source_register: Zählen ja/nein
+	 * Ausgelagert, weil das Ausgabemodul dieselbe Prüfung braucht und der
+	 * Weg über den ScopeMatcher deutlich mehr Zeilen kostet als das frühere
+	 * TL_MODE == 'BE'.
 	 *
-	 * @return: -
+	 * @return bool true bei einem Backend-Request, sonst false. Ohne Container
+	 *              oder Request wird false angenommen — dann läuft der Code
+	 *              außerhalb einer Webanfrage, etwa in einem Test
 	 */
-	protected function RegisterCounter($source_id, $source_name, $source_register)
+	public static function istBackend(): bool
 	{
-		// Zählwerk nur arbeiten lassen, wenn die ID nicht false oder 0 ist
-		if($source_id)
+		$container = System::getContainer();
+
+		if (null === $container || !$container->has('request_stack'))
 		{
-			// Zähler laden, wenn vorhanden
-			$objZaehler = $this->Database->prepare('SELECT * FROM tl_fh_counter WHERE pid=? AND source=?')->execute($source_id, $source_name);
-			if($objZaehler->id)
-			{
-				// Daten zuweisen
-				$array_toponline = unserialize($objZaehler->toponline);
-				$array_iparray = unserialize($objZaehler->iparray);
-				$array_counter = unserialize($objZaehler->counter);
-				$array_online = unserialize($objZaehler->online);
-				$lastvisit = $objZaehler->tstamp;
-				$lastcounting = $objZaehler->lastcounting;
-				$starttime = $objZaehler->starttime;
-				$lastip = $objZaehler->lastip;
-				// Prüfen auf doppelte Datensätze
-				if($objZaehler->numRows > 1)
-				{
-					// Restliche Datensätze löschen
-					while($objZaehler->next()) {
-						$ergebnis = $this->Database->prepare('DELETE FROM tl_fh_counter WHERE id=?')->execute($objZaehler->id);
-					}
-				}
-			}
-			else
-			{
-				// Keine Daten
-				$array_toponline = array();
-				$array_iparray = array();
-				$array_counter = array();
-				$array_online = array();
-				$lastvisit = 0;
-				$lastcounting = 0;
-				$starttime = 0;
-				$lastip = '';
-			}
-
-
-			// Zähler aktualisieren
-			if($source_register)
-			{
-				/**********************************
-				 Onlinestatus
-				 **********************************/
-				// Älteste Onlinezeit festlegen
-				$onlinezeitende = $this->zeit - $this->fhc_onlinetime;
-				// Besucher entfernen, deren Onlinezeit abgelaufen ist
-				if($array_online)
-				{
-					foreach($array_online as $key => $value)
-					{
-						if($value < $onlinezeitende) unset($array_online[$key]);
-					}
-				}
-				// Aktuellen Besucher aktualisieren/eintragen
-				$array_online[$this->ip] = $this->zeit;
-
-				/**********************************
-				 Topliste der Onlinebesucher
-				 **********************************/
-				if(!$array_toponline) // Anlegen, wenn nicht vorhanden
-				{
-					$array_toponline['count'] = 0; // Topbesucherzahl
-					$array_toponline['time'] = 0; // Datum/Zeit
-					$array_toponline['onlinetime'] = $this->fhc_onlinetime; // Eingestellte Onlinezeit
-				}
-				if(count($array_online) > $array_toponline['count'])
-				{
-					// Neue Bestmarke eintragen
-					$array_toponline['count'] = count($array_online);
-					$array_toponline['time'] = $this->zeit;
-					$array_toponline['onlinetime'] = $this->fhc_onlinetime;
-				}
-
-				/**********************************
-				 Zählstatus
-				 **********************************/
-				// Älteste Sperrzeit festlegen
-				$sperrzeitende = $this->zeit - $this->fhc_registernewtime;
-				// Besucher entfernen, deren Sperrzeit abgelaufen ist
-				if($array_iparray)
-				{
-					foreach($array_iparray as $key => $value)
-					{
-						if($value < $sperrzeitende) unset($array_iparray[$key]);
-					}
-				}
-				// Besucher bereits gezählt?
-				$zaehlen = isset($array_iparray[$this->ip]) ? false : true; // false = Nicht zählen, da IP bereits erfaßt
-				// Aktuellen Besucher aktualisieren/eintragen
-				$array_iparray[$this->ip] = $this->zeit;
-
-				/**********************************
-				 Zählwerk starten
-				 **********************************/
-				if($zaehlen)
-				{
-					/**********************************
-					 Zähler aktualisieren
-					 **********************************/
-					$array_counter["all"]++;
-					$array_counter[$this->jahr]["all"]++;
-					$array_counter[$this->jahr][$this->monat]["all"]++;
-					if(isset($array_counter[$this->jahr][$this->monat][$this->tag]["all"]))
-						$array_counter[$this->jahr][$this->monat][$this->tag]["all"]++;
-					else
-						$array_counter[$this->jahr][$this->monat][$this->tag]["all"] = 0;
-					if(isset($array_counter[$this->jahr][$this->monat][$this->tag][$this->stunde]))
-						$array_counter[$this->jahr][$this->monat][$this->tag][$this->stunde]++;
-					else
-						$array_counter[$this->jahr][$this->monat][$this->tag][$this->stunde]= 0;
-
-					/**********************************
-					 Datenbanktabelle aktualisieren
-					 **********************************/
-					if($objZaehler->id)
-					{
-						// Zähler vorhanden
-						$set = array('tstamp'       => $this->zeit,
-									 'totalhits'    => $array_counter['all'],
-									 'lastip'       => $this->ip,
-									 'lastcounting' => $this->zeit,
-									 'toponline'    => serialize($array_toponline),
-									 'iparray'      => serialize($array_iparray),
-									 'counter'      => serialize($array_counter),
-									 'online'       => serialize($array_online)
-									);
-						$this->Database->prepare("UPDATE tl_fh_counter %s WHERE pid=? AND source=?")->set($set)->execute($source_id, $source_name);
-						$lastvisit = $set['tstamp'];
-						$lastcounting = $set['lastcounting'];
-						$lastip = $set['lastip'];
-					}
-					else
-					{
-						// Neuen Zähler schreiben
-						$set = array('tstamp'       => $this->zeit,
-									 'starttime'    => $this->zeit,
-									 'source'       => $source_name,
-									 'pid'          => $source_id,
-									 'totalhits'    => $array_counter['all'],
-									 'lastip'       => $this->ip,
-									 'lastcounting' => $this->zeit,
-									 'toponline'    => serialize($array_toponline),
-									 'iparray'      => serialize($array_iparray),
-									 'counter'      => serialize($array_counter),
-									 'online'       => serialize($array_online)
-									);
-						$this->Database->prepare("INSERT INTO tl_fh_counter %s")->set($set)->execute();
-						$lastvisit = $set['tstamp'];
-						$lastcounting = $set['lastcounting'];
-						$starttime = $set['starttime'];
-						$lastip = $set['lastip'];
-					}
-				}
-				else
-				{
-					/**********************************
-					 Datenbanktabelle aktualisieren
-					 **********************************/
-					if($objZaehler->id && !$this->be_user)
-					{
-						// Zähler vorhanden und BE-Benutzer ignorieren
-						$set = array('tstamp'       => $this->zeit,
-									 'lastip'       => $this->ip,
-									 'toponline'    => serialize($array_toponline),
-									 'online'       => serialize($array_online)
-									);
-						$this->Database->prepare("UPDATE tl_fh_counter %s WHERE pid=? AND source=?")->set($set)->execute($source_id, $source_name);
-						$lastvisit = $set['tstamp'];
-						$lastip = $set['lastip'];
-					}
-				}
-
-				// GLOBALS füllen
-				$GLOBALS['fhcounter'][$source_name]['counting'] = $zaehlen;
-				$GLOBALS['fhcounter'][$source_name]['tstamp'] = $lastvisit;
-				$GLOBALS['fhcounter'][$source_name]['starttime'] = $starttime;
-				$GLOBALS['fhcounter'][$source_name]['source'] = $source_name;
-				$GLOBALS['fhcounter'][$source_name]['pid'] = $source_id;
-				$GLOBALS['fhcounter'][$source_name]['totalhits'] = $array_counter['all'];
-				$GLOBALS['fhcounter'][$source_name]['lastcounting'] = $lastcounting;
-				$GLOBALS['fhcounter'][$source_name]['lastip'] = $lastip;
-				$GLOBALS['fhcounter'][$source_name]['toponline'] = $array_toponline;
-				$GLOBALS['fhcounter'][$source_name]['counter'] = $array_counter;
-				$GLOBALS['fhcounter'][$source_name]['online'] = count($array_online);
-
-				// Standardzähler in GLOBALS aktualisieren
-				$GLOBALS['fhcounter']['default']['counting'] = $GLOBALS['fhcounter'][$source_name]['counting'];
-				$GLOBALS['fhcounter']['default']['tstamp'] = $GLOBALS['fhcounter'][$source_name]['tstamp'];
-				$GLOBALS['fhcounter']['default']['starttime'] = $GLOBALS['fhcounter'][$source_name]['starttime'];
-				$GLOBALS['fhcounter']['default']['source'] = $GLOBALS['fhcounter'][$source_name]['source'];
-				$GLOBALS['fhcounter']['default']['pid'] = $GLOBALS['fhcounter'][$source_name]['pid'];
-				$GLOBALS['fhcounter']['default']['totalhits'] = $GLOBALS['fhcounter'][$source_name]['totalhits'];
-				$GLOBALS['fhcounter']['default']['lastcounting'] = $GLOBALS['fhcounter'][$source_name]['lastcounting'];
-				$GLOBALS['fhcounter']['default']['lastip'] = $GLOBALS['fhcounter'][$source_name]['lastip'];
-				$GLOBALS['fhcounter']['default']['toponline'] = $GLOBALS['fhcounter'][$source_name]['toponline'];
-				$GLOBALS['fhcounter']['default']['counter'] = $GLOBALS['fhcounter'][$source_name]['counter'];
-				$GLOBALS['fhcounter']['default']['online'] = $GLOBALS['fhcounter'][$source_name]['online'];
-			}
-
+			return false;
 		}
-		else
+
+		$request = $container->get('request_stack')->getCurrentRequest();
+
+		if (null === $request)
 		{
-			// source_id ist leer, Fehler loggen
-			if(!$GLOBALS['TL_CONFIG']['counter_donotlogid']) $this->log('FH-Counter source_id='.$source_id.', source_name='.$source_name.', URI='.$_SERVER['REQUEST_URI'], __METHOD__, TL_ERROR);
+			return false;
 		}
+
+		return $container->get('contao.routing.scope_matcher')->isBackendRequest($request);
 	}
-
 }

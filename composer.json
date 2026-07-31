@@ -1,7 +1,7 @@
 {
     "name": "schachbulle/contao-counter-bundle",
     "type": "contao-bundle",
-    "description": "Zählt die Zugriffe auf Seiten, Artikel und Nachrichten und gibt die Zahlen im Frontend aus.",
+    "description": "Zählt die Zugriffe auf Seiten, Artikel und Nachrichten, gibt die Zahlen im Frontend aus und wertet sie im Backend mit Diagrammen aus.",
     "keywords": [
         "contao",
         "zähler",
@@ -17,18 +17,17 @@
         }
     ],
     "require": {
-        "php": ">=5.6",
-        "contao/core-bundle": "^4",
-        "contao/news-bundle": "*",
-        "schachbulle/contao-helper-bundle": "*"
+        "php": "^7.4 || ^8.0",
+        "contao/core-bundle": "^4.13 || ^5.0",
+        "contao/news-bundle": "^4.13 || ^5.0",
+        "symfony/cache": "^5.4 || ^6.0 || ^7.0"
     },
     "conflict": {
         "contao/core": "*",
         "contao/manager-plugin": "<2.0 || >=3.0"
     },
     "require-dev": {
-        "contao/manager-plugin": "^2.0",
-        "doctrine/doctrine-cache-bundle": "^1.3"
+        "contao/manager-plugin": "^2.0"
     },
     "extra": {
         "contao-manager-plugin": "Schachbulle\\ContaoCounterBundle\\ContaoManager\\Plugin"

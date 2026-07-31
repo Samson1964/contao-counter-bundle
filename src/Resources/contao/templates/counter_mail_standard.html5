@@ -1,0 +1,74 @@
+<?php
+/**
+ * Vorlage der täglichen Statistik-Mail.
+ *
+ * Wird über System -> Einstellungen -> Zähler ausgewählt. Wer ein eigenes
+ * Layout möchte, legt eine Kopie unter templates/ mit dem Namensanfang
+ * „counter_mail_“ ab; sie erscheint dann in der Auswahlliste.
+ *
+ * Verfügbare Variablen:
+ *   titel        Überschrift und Betreff, z. B. „Top-50 Nachrichten 30.07.2026“
+ *   bezeichnung  Mehrzahl der Inhaltsart: Seiten, Artikel oder Nachrichten
+ *   einzahl      Einzahl für den Fließtext, z. B. „diese Nachricht“
+ *   spalteZusatz Überschrift der vierten Spalte: Alias, Seite oder Archiv
+ *   zeitraum     Beschreibung des Zeitraums
+ *   gesamt       Summe aller Zugriffe im Zeitraum
+ *   zeilen       Rangliste mit platz, hits, titel, zusatz, datum, farbe
+ *   istArtikel   true bei der Artikelstatistik (blendet eine Erklärung ein)
+ *
+ * Achtung: E-Mail-Programme verwerfen häufig Stilangaben im Kopfbereich,
+ * deshalb stehen die Farben unmittelbar an den Elementen.
+ */
+$schrift = 'font-family:Verdana,Calibri,Arial,sans-serif;';
+$zelle = $schrift.'font-size:13px;padding:6px 10px;border-bottom:1px solid #d8d8d8;';
+$kopf = $zelle.'background:#1F618D;color:#ffffff;font-weight:bold;text-align:left;';
+?>
+<div style="<?= $schrift ?>font-size:13px;color:#1f1f1f;max-width:820px;">
+
+	<h1 style="<?= $schrift ?>font-size:20px;margin:0 0 4px;color:#1F618D;"><?= $this->titel ?></h1>
+
+	<p style="margin:0 0 18px;color:#5c5c5c;">
+		<?= number_format($this->gesamt, 0, ',', '.') ?> Zugriffe auf <?= $this->bezeichnung ?>
+		im Zeitraum <?= $this->zeitraum ?>
+	</p>
+
+	<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;border:1px solid #d8d8d8;">
+		<tr>
+			<th style="<?= $kopf ?>width:40px;text-align:right;">Pl.</th>
+			<th style="<?= $kopf ?>width:80px;text-align:right;">Zugriffe</th>
+			<th style="<?= $kopf ?>"><?= $this->bezeichnung ?></th>
+			<th style="<?= $kopf ?>width:200px;"><?= $this->spalteZusatz ?></th>
+			<th style="<?= $kopf ?>width:130px;text-align:right;">Datum</th>
+		</tr>
+		<?php foreach($this->zeilen as $z): ?>
+			<tr style="background-color:<?= $z['farbe'] ?>;">
+				<td style="<?= $zelle ?>text-align:right;"><?= $z['platz'] ?>.</td>
+				<td style="<?= $zelle ?>text-align:right;font-weight:bold;"><?= number_format($z['hits'], 0, ',', '.') ?></td>
+				<td style="<?= $zelle ?>"><?= $z['titel'] ?></td>
+				<td style="<?= $zelle ?>"><?= $z['zusatz'] ?></td>
+				<td style="<?= $zelle ?>text-align:right;white-space:nowrap;"><?= $z['datum'] ?></td>
+			</tr>
+		<?php endforeach; ?>
+	</table>
+
+	<div style="margin:18px 0 0;color:#5c5c5c;font-size:12px;line-height:1.5;">
+		<p style="margin:0 0 8px;">
+			Die Zugriffe werden anhand der IP-Adressen der Besucher gezählt. Kehrt ein Besucher
+			innerhalb der eingestellten Sperrzeit auf <?= $this->einzahl ?> zurück, wird er nicht
+			erneut gezählt. Je kürzer die Sperrzeit, desto höher fällt die Besucherzahl aus.
+		</p>
+		<p style="margin:0 0 8px;">
+			Das Alter ist farblich gekennzeichnet: von Grün (ganz aktuell) über Gelb bis Rot
+			und Grau (älter als ein Jahr).
+		</p>
+		<?php if($this->istArtikel): ?>
+			<p style="margin:0 0 8px;">
+				Zu jeder Seite gehört mindestens ein Artikel, der ihre Inhalte trägt; weitere
+				können frei angelegt werden. Getrennt gezählt wird ein Artikel nur, wenn er
+				eigens aufgerufen wird — in der Adresse am Bestandteil „articles“ zu erkennen.
+			</p>
+		<?php endif; ?>
+		<p style="margin:0;"><strong>Diese E-Mail wurde automatisch erzeugt.</strong></p>
+	</div>
+
+</div>

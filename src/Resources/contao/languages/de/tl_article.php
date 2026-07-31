@@ -9,4 +9,4 @@ declare(strict_types=1);
  * @license   LGPL-3.0-or-later
  */
 
-$GLOBALS['TL_LANG']['tl_page']['counter_pages'] = ['Statistik', 'Seitenstatistik anzeigen'];
+$GLOBALS['TL_LANG']['tl_article']['counter_articles'] = ['Statistik', 'Artikelstatistik anzeigen'];

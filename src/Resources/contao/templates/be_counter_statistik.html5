@@ -1,0 +1,99 @@
+<?php
+/**
+ * Backend-Template der Zugriffsstatistik.
+ * Wird von Modules\Statistik und seinen drei Ableitungen (Seiten, Artikel,
+ * Nachrichten) verwendet — die Ansicht ist für alle drei identisch.
+ */
+?>
+<div id="tl_buttons">
+	<a href="<?= $this->urlZurueckModul ?>" class="header_back" title="" accesskey="b" onclick="Backend.getScrollOffset()"><?= $GLOBALS['TL_LANG']['MSC']['backBT'] ?? 'Zurück' ?></a>
+</div>
+
+<h2 class="sub_headline">Zugriffsstatistik <?= $this->bezeichnung ?></h2>
+
+<div class="tl_listing_container fhc-stat">
+
+	<div class="fhc-stat-steuerung">
+		<div class="fhc-stat-gruppe">
+			<span class="fhc-stat-titel">Zeitraum</span>
+			<?php foreach($this->ebenenLinks as $l): ?>
+				<a href="<?= $l['url'] ?>" class="fhc-stat-knopf<?= $l['aktiv'] ? ' aktiv' : '' ?>"><?= $l['text'] ?></a>
+			<?php endforeach; ?>
+		</div>
+	</div>
+
+	<div class="fhc-stat-navigation">
+		<a href="<?= $this->urlZurueck ?>" class="fhc-stat-knopf" title="Einen Zeitraum zurück">&#9664;&nbsp;zurück</a>
+
+		<span class="fhc-stat-zeitraum"><strong><?= $this->zeitraum ?></strong></span>
+
+		<?php if($this->kannVor): ?>
+			<a href="<?= $this->urlVor ?>" class="fhc-stat-knopf" title="Einen Zeitraum vor">vor&nbsp;&#9654;</a>
+			<a href="<?= $this->urlHeute ?>" class="fhc-stat-knopf">bis heute</a>
+		<?php else: ?>
+			<span class="fhc-stat-knopf gesperrt" aria-disabled="true">vor&nbsp;&#9654;</span>
+		<?php endif; ?>
+
+		<span class="fhc-stat-hinweis">Stand: <?= $this->cacheDatum ?></span>
+	</div>
+
+	<?php if(!$this->hatDaten): ?>
+
+		<p class="tl_info">
+			Für diesen Zeitraum sind keine Zugriffe auf <?= $this->bezeichnung ?> gezählt.
+			Mit „zurück“ lässt sich ein früherer Zeitraum ansteuern; über die Knöpfe oben
+			wird aus dem Tag ein ganzer Monat oder ein ganzes Jahr.
+		</p>
+
+	<?php else: ?>
+
+		<div class="fhc-stat-kennzahl">
+			<strong><?= number_format($this->gesamt, 0, ',', '.') ?></strong>
+			Zugriffe auf <?= $this->bezeichnung ?> im Zeitraum <?= $this->zeitraum ?>
+		</div>
+
+		<?php if($this->diagramm): ?>
+			<div class="fhc-stat-diagramm">
+				<div class="fhc-stat-legende"><span><?= $this->diagrammTitel ?> (alle <?= $this->bezeichnung ?> zusammen)</span></div>
+				<div class="fhc-stat-scroll">
+					<?= $this->diagramm ?>
+				</div>
+			</div>
+		<?php endif; ?>
+
+		<div class="fhc-stat-scroll">
+		<table class="tl_listing fhc-stat-tabelle">
+			<thead>
+				<tr>
+					<th class="rechts">Platz</th>
+					<th class="rechts">Zugriffe</th>
+					<th><?= $this->bezeichnung ?></th>
+					<th><?= $this->spalteZusatz ?></th>
+					<th>Datum</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach($this->zeilen as $z): ?>
+					<tr class="<?= $z['css'] ?>">
+						<td class="rechts"><?= $z['platz'] ?></td>
+						<td class="rechts"><strong><?= number_format($z['hits'], 0, ',', '.') ?></strong></td>
+						<td><?= $z['titel'] ?></td>
+						<td class="fhc-stat-zusatz"><?= $z['zusatz'] ?></td>
+						<td class="rechts"><?= $z['datum'] ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		</div>
+
+		<p class="tl_help">
+			Gezeigt werden die <?= $this->anzahl ?> meistbesuchten <?= $this->bezeichnung ?>;
+			die Anzahl lässt sich unter System &rarr; Einstellungen ändern. Gezählt wird
+			nach IP-Adressen: Wer innerhalb der eingestellten Sperrzeit zurückkehrt, zählt
+			nicht erneut. Die Werte werden zwischengespeichert — der laufende Zeitraum eine
+			Stunde, abgeschlossene Zeiträume einen Tag.
+		</p>
+
+	<?php endif; ?>
+
+</div>

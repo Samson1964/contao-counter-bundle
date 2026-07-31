@@ -1,69 +1,142 @@
 # Counter
 
-Ein Modul für Contao ab mindestens Version 3.1, welches die Zugriffe auf Seiten, Artikel und Nachrichten zählen kann.  
-Die hier vorliegende Version ist auf schachbund.de zwar schon im produktiven Einsatz, befindet sich aber noch in der Entwicklungsphase.
+Eine Erweiterung für **Contao 4.13 und Contao 5**, die die Zugriffe auf Seiten, Artikel und
+Nachrichten zählt, die Zahlen im Frontend ausgibt und sie im Backend als Bestenliste mit
+Verlaufsdiagramm auswertet. Auf Wunsch verschickt ein täglicher Cronjob die Bestenlisten
+per E-Mail.
 
-## Einbindung
+Die Erweiterung ist auf schachbund.de seit Jahren im produktiven Einsatz.
 
-Counter besteht aus einem Zähler- und einem Ausgabemodul. Das Zählermodul zählt die Zugriffe und muß **vor** dem Ausgabemodul im Seitenlayout oder in einer Seite eingebunden werden.
+## Installation
 
-Diese beiden Frontendmodule finden Sie im Bereich **Counter** unter Themes -> Module. Das Zählermodul müssen Sie nur einmal einbinden, das Ausgabemodul können Sie an beliebig vielen Stellen mit verschiedenen Templates einbinden.  
-Das Zählermodul verwaltet die Daten in der Tabelle tl_fh_counter und schreibt zusätzlich die Daten der aktuellen Inhalte (Seite, Artikel, Nachricht) in $GLOBALS['fhcounter']. Dort werden sie vom Ausgabemodul weiter verwendet.
+```bash
+composer require schachbulle/contao-counter-bundle
+```
 
-## Template-Variablen
+Anschließend den Datenbankabgleich ausführen (Contao-Manager oder `contao:migrate`).
 
-**ViewCounterinfo** (boolean): Kopfdaten des Zählers vorhanden ja/nein
+## Zählung einrichten
 
-**ViewDiagrams** (boolean): Diagramme des Zählers vorhanden ja/nein. Benötigt JQuery!
+Counter besteht aus einem **Zählermodul** und einem **Ausgabemodul**. Beide finden Sie unter
+*Themes → Module* im Bereich **Counter**.
 
-**CounterSource**: Name des Zählers (tl_news, tl_article, tl_page)
+Das Zählermodul zählt und gibt selbst nichts aus. Es muss **vor** dem Ausgabemodul im
+Seitenlayout stehen und wird nur einmal eingebunden. Das Ausgabemodul kann an beliebig
+vielen Stellen mit unterschiedlichen Templates stehen.
 
-**CounterPid**: ID von CounterSource
+Wer ohne Module auskommen möchte, nimmt stattdessen die Insert-Tags `{{fhcounter}}` (zählt)
+und `{{fhcounterview}}` (gibt aus). Sie arbeiten mit festen Vorgaben und kennen keine
+Moduleinstellungen.
 
-**CounterStarttime**: Timestamp der ersten Zählung
+Die Zählstände liegen in der Tabelle `tl_fh_counter`; die Werte des aktuellen Aufrufs stehen
+zusätzlich in `$GLOBALS['fhcounter']`, wo das Ausgabemodul sie abholt.
 
-**CounterLastcounting**: Timestamp der letzten Zählung
+## Statistiken im Backend
 
-**CounterLastip**: IP-Adresse des letzten Besuchers, gezählt oder nicht gezählt. In der Regel sollte das die eigene IP sein.
+In der **Seitenstruktur**, bei den **Artikeln** und bei den **Nachrichten** führt jeweils der
+Knopf *Statistik* zur Auswertung. Sie zeigt:
 
-**CounterOnline**: Anzahl der aktuellen Besucher dieser URL
+* die Bestenliste der meistbesuchten Inhalte im gewählten Zeitraum,
+* ein Verlaufsdiagramm über alle Inhalte zusammen,
+* eine Navigation über Tag, Monat und Jahr mit Vor- und Zurückschritt.
 
-**CounterTopOnlineCount**: Spitzenwert der Anzahl der aktuellen Besucher
+Das Diagramm zeigt jeweils die nächstfeinere Einteilung: die 24 Stunden eines Tages, die Tage
+eines Monats oder die zwölf Monate eines Jahres. Es entsteht als SVG auf dem Server und
+braucht kein Javascript.
 
-**CounterTopOnlineTime**: Timestamp des Spitzenwerts der Anzahl der aktuellen Besucher
+Die Auswertung wird zwischengespeichert — der laufende Zeitraum eine Stunde, abgeschlossene
+Zeiträume einen Tag.
 
-**CounterTotalhits** / **CounterAll**: Anzahl der Gesamtzugriffe
+## Statistik per E-Mail
 
-**CounterYesterday**: Anzahl der Zugriffe gestern
+Unter *System → Einstellungen → Zähler: Statistik per E-Mail* lässt sich ein täglicher Versand
+einschalten. Verschickt wird:
 
-**CounterThisDay**: Anzahl der Zugriffe heute
+* immer die Bestenliste des **Vortags**,
+* montags zusätzlich die der **vergangenen Woche** (Montag bis Sonntag),
+* am Monatsersten zusätzlich die des **Vormonats**.
 
-**CounterAverage**: Durchschnittliche Besucherzahl je Tag
+Je gewählter Inhaltsart geht eine eigene E-Mail hinaus. Empfänger, Kopieempfänger, Absender,
+Betreffzusatz und die Zahl der Listenplätze werden dort ebenfalls gepflegt. Ohne Empfänger
+wird nichts verschickt.
 
-Das sind bei Weitem nicht alle Template-Variablen, aber die wichtigsten. Darüberhinaus sind die Templates noch nicht ausgereift und enthalten Fehler. Variablennamen können sich noch ändern oder werden nicht mehr benutzt.
+Das Layout steckt im Template `counter_mail_standard`. Eine eigene Fassung legen Sie unter
+`templates/` mit dem Namensanfang `counter_mail_` ab; sie erscheint dann in der Auswahlliste.
+Die Zeilenfarbe zeigt das Alter des Inhalts an, von Grün (ganz aktuell) über Gelb bis Rot und
+Grau (älter als ein Jahr).
 
-Den o.g. Variablennamen kann außerdem jeweils noch ein Präfix mitgegeben werden. So zeigt **PageCounterAverage** z.B. die durchschnittliche Besucherzahl je Tag für die aktive Seite, egal ob gerade ein Artikel oder eine Nachricht angezeigt wird. Die anderen Präfixe sind **Article** und **News**.  
-Der allgemeine Zähler ohne Präfix gewichtet die anderen Zähler in der Reihenfolge Seite, Artikel, Nachricht. Der allgemeine Zähler wird also zuerst mit den Daten der Seite gefüllt und anschließend mit den Daten des Artikels überschrieben - falls überhaupt gerade ein Artikel angezeigt wird.
+Voraussetzung ist ein eingerichteter Contao-Cronjob (Contao-Manager oder ein Aufruf von
+`contao:cron` durch den Hoster).
 
-## Einstellungen von Contao
+## Weitere Einstellungen
 
-Counter arbeitet mit folgenden Frontend-Einstellungen offensichtlich einwandfrei:
+Unter *System → Einstellungen → Zähler*:
 
-**URLs umschreiben** = true
-**Auto_item aktivieren** = true
-**Die Sprache zur URL hinzufügen** = false
-**Leere URLs nicht umleiten** = false
-**Ordner-URLs verwenden** = false
-**Keine Seitenaliase verwenden** = false
+| Einstellung | Bedeutung |
+|---|---|
+| Anzahl Seiten / Artikel / Nachrichten | Länge der Bestenliste im Backend |
+| Fehler 404 nicht protokollieren | Aufrufe nicht vorhandener Seiten nicht ins Systemprotokoll schreiben |
+| Fehlende Quell-ID nicht protokollieren | Nicht vermerken, wenn ein Inhalt nicht zugeordnet werden konnte |
 
-Andere Einstellungen wurden noch nicht genügend getestet. Solange aber nur Seiten gezählt werden, sollte FH-Counter keine Probleme haben. Die ID der aktuellen Seite wird einem Modul von Contao zur Verfügung gestellt.
+Am Zählermodul selbst werden Onlinezeit (wie lange ein Besucher als „online“ gilt) und
+Zählsperre (wie lange ein wiederkehrender Besucher nicht erneut zählt) eingestellt, ebenso ob
+angemeldete Backend-Benutzer mitgezählt werden.
 
-Bei der Artikelzählung holt sich der Zähler den Inhalt der GET-Variablen articles und ermittelt damit den gerade aktiven Artikel.
+## Template-Variablen des Ausgabemoduls
 
-Die Nachrichtenzählung ist etwas komplizierter, da das Seitenalias frei wählbar ist und Contao selbst keine Informationen zu einer angezeigten Nachricht liefert. Der Zähler ermittelt deshalb für alle Nachrichten-Archive zuerst die Weiterleitungsseiten, also die Nachrichtenleser. Entspricht die aktive Seite so einem Nachrichtenleser, wird aus $_SERVER['REQUEST_URI'] der Nachrichten-Alias extrahiert und die Nachricht kann gezählt werden.
+Mitgeliefert werden die Templates `fhcounter_mini`, `fhcounter_standard`, `fhcounter_full` und
+`fhcounter_diagramme`. Eigene Fassungen unter `templates/` mit dem Namensanfang `fhcounter_`
+erscheinen in der Auswahlliste.
 
-## Fehler und Support
+| Variable | Inhalt |
+|---|---|
+| `ViewCounterinfo` | Kopfdaten des Zählers vorhanden ja/nein |
+| `ViewDiagrams` | Diagramme vorhanden ja/nein |
+| `CounterSource` | Name der Quelltabelle (tl_page, tl_article, tl_news) |
+| `CounterPid` | ID des Inhalts in seiner Quelltabelle |
+| `CounterStarttime` | Zeitstempel der ersten Zählung |
+| `CounterLastcounting` | Zeitstempel der letzten Zählung |
+| `CounterLastip` | IP-Adresse des letzten Besuchers |
+| `CounterOnline` | Zahl der aktuellen Besucher dieser Adresse |
+| `CounterTopOnlineCount` | Bestmarke der gleichzeitigen Besucher |
+| `CounterTopOnlineTime` | Zeitstempel dieser Bestmarke |
+| `CounterAll` / `CounterTotalhits` | Gesamtzugriffe |
+| `CounterThisYear` / `CounterThisMonth` / `CounterThisDay` / `CounterThisHour` | Zugriffe im laufenden Jahr, Monat, Tag, in der laufenden Stunde |
+| `CounterYesterday` / `CounterLastMonth` | Zugriffe gestern bzw. im Vormonat |
+| `CounterAverage` | durchschnittliche Zugriffe je Tag |
+| `CounterCheck` | wurde dieser Besucher gezählt? |
+| `CounterHoursChart` / `CounterDaysChart` / `CounterMonthsChart` | fertige SVG-Diagramme der letzten 24 Stunden, 30 Tage, 12 Monate |
 
-Da Counter noch in der Entwicklungsphase ist und auch noch nicht im ER von Contao eingebunden wurde, halte ich mich mit Unterstützung zur Erweiterung etwas zurück. Mich kann man aber gern im Contao-Forum (Samson1964) oder hier auf GitHub kontaktieren.
+Den Namen kann ein Präfix vorangestellt werden: **Page**, **Article** oder **News**.
+`PageCounterAverage` liefert also die durchschnittliche Besucherzahl der aktiven Seite, egal
+ob gerade ein Artikel oder eine Nachricht angezeigt wird.
+
+Der Zähler ohne Präfix ist der **Standardzähler**. Er wird in der Reihenfolge Seite, Artikel,
+Nachricht befüllt — es gewinnt also der speziellste Inhalt, der auf der Seite angezeigt wird.
+
+## Voraussetzungen an die Contao-Einstellungen
+
+Counter arbeitet mit folgenden Frontend-Einstellungen einwandfrei:
+
+* URLs umschreiben = ja
+* Auto_item aktivieren = ja
+* Die Sprache zur URL hinzufügen = nein
+* Leere URLs nicht umleiten = nein
+* Ordner-URLs verwenden = nein
+* Keine Seitenaliase verwenden = nein
+
+Andere Kombinationen sind nicht durchgetestet. Solange nur Seiten gezählt werden, ist Counter
+unempfindlich — die Seiten-ID bekommt ein Modul von Contao geliefert.
+
+Bei Artikeln liest der Zähler den URL-Parameter `articles` aus. Bei Nachrichten ist es
+aufwendiger, weil Contao einem Modul nicht verrät, welche Nachricht der Nachrichtenleser
+gerade zeigt: Der Zähler sammelt die Weiterleitungsseiten aller Nachrichtenarchive und
+schneidet, wenn die aktuelle Seite eine davon ist, den Alias aus der Adresse.
+
+## Fehler und Unterstützung
+
+Fragen und Fehlermeldungen gern über die
+[GitHub-Issues](https://github.com/Samson1964/contao-counter-bundle/issues) oder im
+Contao-Forum (Samson1964).
 
 **Frank Hoppe**

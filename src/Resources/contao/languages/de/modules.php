@@ -1,20 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 /**
- * Contao Open Source CMS
+ * Counter für Contao Open Source CMS
  *
- * Copyright (c) 2005-2014 Leo Feyer
- *
- * @package   fh-counter
  * @author    Frank Hoppe
- * @license   GNU/LGPL
- * @copyright Frank Hoppe 2014
+ * @license   LGPL-3.0-or-later
  */
-
 
 /**
- * Front end modules
+ * Frontend-Module
  */
-$GLOBALS['TL_LANG']['FMD']['fhcounter'] = "FH-Counter";
-$GLOBALS['TL_LANG']['FMD']['fhcounter_register'] = array('FH-Counter Zählermodul', 'Das Basismodul von FH-Counter zählt die Zugriffe und wird auf jeden Fall benötigt.');
-$GLOBALS['TL_LANG']['FMD']['fhcounter_view'] = array('FH-Counter Ausgabemodul', 'Ausgabemodul des FH-Counter');
+$GLOBALS['TL_LANG']['FMD']['fhcounter'] = 'Counter';
+$GLOBALS['TL_LANG']['FMD']['fhcounter_register'] = ['Zählermodul', 'Zählt die Zugriffe und wird auf jeden Fall benötigt. Muss im Seitenlayout vor dem Ausgabemodul stehen.'];
+$GLOBALS['TL_LANG']['FMD']['fhcounter_view'] = ['Ausgabemodul', 'Gibt die gezählten Werte über ein wählbares Template aus. Darf mehrfach eingebunden werden.'];

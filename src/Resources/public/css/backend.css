@@ -1,0 +1,145 @@
+/**
+ * Counter — Stile der Backend-Statistik
+ *
+ * Eingebunden über TL_CSS in Resources/contao/config/config.php.
+ * Die Gestaltung folgt dem Wertungsportal-Bundle, damit die Statistiken der
+ * Erweiterungen im Backend einheitlich aussehen.
+ */
+
+.fhc-stat-steuerung {
+	display					: flex;
+	flex-wrap				: wrap;
+	gap						: 10px 26px;
+	margin					: 0 0 14px;
+	padding					: 12px 14px;
+	border					: 1px solid #ddd;
+	border-radius			: 3px;
+	background				: #f7f7f7;
+}
+
+.fhc-stat-gruppe {
+	display					: flex;
+	flex-wrap				: wrap;
+	align-items				: center;
+	gap						: 6px;
+}
+
+.fhc-stat-titel {
+	margin-right			: 4px;
+	font-weight				: bold;
+	color					: #5c5c5c;
+}
+
+.fhc-stat-knopf {
+	display					: inline-block;
+	padding					: 4px 10px;
+	border					: 1px solid #c8c8c8;
+	border-radius			: 3px;
+	background				: #fff;
+	color					: #1f1f1f;
+	text-decoration			: none;
+}
+
+a.fhc-stat-knopf:hover {
+	border-color			: #1F618D;
+	color					: #1F618D;
+}
+
+.fhc-stat-knopf.aktiv {
+	border-color			: #1F618D;
+	background				: #1F618D;
+	color					: #fff;
+	font-weight				: bold;
+}
+
+.fhc-stat-knopf.gesperrt {
+	opacity					: 0.45;
+	cursor					: default;
+}
+
+.fhc-stat-navigation {
+	display					: flex;
+	flex-wrap				: wrap;
+	align-items				: center;
+	gap						: 10px;
+	margin					: 0 0 14px;
+}
+
+.fhc-stat-zeitraum {
+	font-size				: 1.1em;
+	color					: #1f1f1f;
+}
+
+.fhc-stat-hinweis {
+	margin-left				: auto;
+	color					: #8a8a8a;
+}
+
+.fhc-stat-kennzahl {
+	margin					: 0 0 14px;
+	padding					: 10px 14px;
+	border					: 1px solid #cfe0ec;
+	border-radius			: 3px;
+	background				: #eaf2f8;
+}
+
+.fhc-stat-kennzahl strong {
+	font-size				: 1.4em;
+	color					: #1F618D;
+}
+
+.fhc-stat-diagramm {
+	margin					: 0 0 22px;
+	padding					: 12px 14px 6px;
+	border					: 1px solid #ddd;
+	border-radius			: 3px;
+	background				: #fff;
+}
+
+.fhc-stat-legende {
+	/* Eigene Zeile erzwingen: Im Backend können umgebende Stile Elemente
+	   schweben lassen — ohne clear rutscht das Diagramm neben die Legende */
+	clear					: both;
+	width					: 100%;
+	margin-bottom			: 8px;
+	color					: #5c5c5c;
+}
+
+.fhc-stat-scroll {
+	overflow-x				: auto;
+	clear					: both;
+	width					: 100%;
+}
+
+.fhc-stat-tabelle {
+	width					: 100%;
+	/* Ohne Mindestbreite quetscht sich die Tabelle im schmalen
+	   Backend-Fenster zusammen, statt den Rollbereich zu nutzen */
+	min-width				: 720px;
+	border-collapse			: collapse;
+}
+
+.fhc-stat-tabelle th,
+.fhc-stat-tabelle td {
+	padding					: 6px 10px;
+	border-bottom			: 1px solid #e2e2e2;
+	text-align				: left;
+}
+
+.fhc-stat-tabelle th {
+	background				: #f2f2f2;
+	font-weight				: bold;
+}
+
+.fhc-stat-tabelle .rechts {
+	text-align				: right;
+	white-space				: nowrap;
+}
+
+.fhc-stat-tabelle .fhc-stat-zusatz {
+	color					: #5c5c5c;
+}
+
+.fhc-stat-tabelle tr.odd td {
+	background				: #fafafa;
+}

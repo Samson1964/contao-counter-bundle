@@ -1,9 +1,12 @@
 services:
-    _instanceof:
-        Contao\CoreBundle\Framework\FrameworkAwareInterface:
-            calls:
-                - ["setFramework", ["@contao.framework"]]
-
-        Symfony\Component\DependencyInjection\ContainerAwareInterface:
-            calls:
-                - ["setContainer", ["@service_container"]]
+    # Täglicher Versand der Zugriffsstatistik per E-Mail.
+    # Ausdrücklich registriert, weil dieses Bundle ohne Autoconfigure arbeitet.
+    #
+    # Hinweis: Hier stand früher ein _instanceof-Block für FrameworkAwareInterface
+    # und ContainerAwareInterface. Keine Klasse dieser Erweiterung setzt die
+    # beiden um, und ContainerAwareInterface gibt es seit Symfony 7 nicht mehr —
+    # der Block verhinderte damit den Containerbau unter Contao 5.
+    Schachbulle\ContaoCounterBundle\Cron\Statistikmail:
+        public: true
+        tags:
+            - { name: contao.cronjob, interval: daily }
