@@ -75,6 +75,59 @@ a.fhc-stat-knopf:hover {
 	color					: #8a8a8a;
 }
 
+.fhc-stat-versand {
+	margin					: 0 0 18px;
+	padding					: 14px;
+	border					: 1px solid #cfe0ec;
+	border-radius			: 3px;
+	background				: #eaf2f8;
+}
+
+.fhc-stat-versand h3 {
+	margin					: 0 0 6px;
+	font-size				: 1.1em;
+}
+
+.fhc-stat-versand .tl_help {
+	margin					: 0 0 12px;
+}
+
+.fhc-stat-versand-felder {
+	display					: flex;
+	flex-wrap				: wrap;
+	gap						: 14px;
+}
+
+.fhc-stat-versand-felder label {
+	display					: flex;
+	flex-direction			: column;
+	flex					: 1 1 280px;
+	gap						: 4px;
+}
+
+.fhc-stat-versand-felder span {
+	font-weight				: bold;
+	color					: #5c5c5c;
+}
+
+.fhc-stat-versand-felder textarea {
+	width					: 100%;
+	padding					: 6px 8px;
+	border					: 1px solid #c8c8c8;
+	border-radius			: 3px;
+	background				: #fff;
+	font-family				: inherit;
+	font-size				: inherit;
+	resize					: vertical;
+}
+
+.fhc-stat-versand-knoepfe {
+	display					: flex;
+	align-items				: center;
+	gap						: 10px;
+	margin-top				: 12px;
+}
+
 .fhc-stat-kennzahl {
 	margin					: 0 0 14px;
 	padding					: 10px 14px;

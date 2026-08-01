@@ -1,6 +1,24 @@
 # Counter Changelog
 
-## Version 2.1.0 (2026-07-31)
+## Version 2.2.0 (2026-08-01)
+
+* Add: **Versand von Hand aus der Backend-Statistik.** Der Knopf „per E-Mail
+  versenden“ verschickt genau den Zeitraum, der gerade angezeigt wird. Vorher
+  erscheinen die eingestellten Empfänger und lassen sich für diesen einen
+  Versand ändern; die dauerhaften Adressen bleiben davon unberührt.
+  Die Auswertung ist zu diesem Zeitpunkt bereits errechnet und liegt im
+  Zwischenspeicher — der Versand dauert deshalb Sekunden und läuft nicht in ein
+  PHP-Zeitlimit
+* Fix: Kräftigere Rahmen in den Tabellen der E-Mails. Auf den hellgrünen Zeilen
+  frischer Inhalte war das bisherige Hellgrau praktisch unsichtbar; die Zellen
+  haben jetzt rundum einen dunkelgrauen Rahmen statt nur unten einen hellen
+* Change: Der Cronjob arbeitet die Zeiträume **vom seltensten zum häufigsten** ab:
+  erst der Vormonat, dann die Vorwoche, zuletzt der Vortag. Jeder Zeitraum kostet
+  einen Durchlauf durch die gesamte Zählertabelle; schneidet ein PHP-Zeitlimit den
+  Lauf ab, fällt so die Tagesstatistik aus (die morgen wiederkommt) statt der
+  Monatsstatistik (die dann für immer fehlt). Genau das war am 01.08.2026 passiert
+
+## Version 2.1.0 (2026-08-01)
 
 * Change: **Empfänger der Statistik-Mails werden je Inhaltsart getrennt gepflegt.**
   Seiten, Artikel und Nachrichten haben nun eigene Felder für Empfänger und
@@ -13,7 +31,7 @@
   werden durch je drei Felder mit den Endungen `_page`, `_article` und `_news`
   ersetzt. **Bereits eingetragene Adressen müssen einmalig neu verteilt werden**
 
-## Version 2.0.2 (2026-07-31)
+## Version 2.0.2 (2026-08-01)
 
 Inhaltlich gleich mit der zurückgezogenen 2.0.1: Deren Tag war versehentlich auf
 den Stand von 2.0.0 gesetzt worden. Packagist hatte die falsche Zuordnung bereits
@@ -33,7 +51,7 @@ ist 2.0.1 ersatzlos entfallen.
   geblieben. Die Referenzform erzeugt auch beim `contao:migrate` ohne
   Sprachdateien keine Warnungen (nachgemessen)
 
-## Version 2.0.0 (2026-07-31)
+## Version 2.0.0 (2026-08-01)
 
 Diese Fassung setzt Contao 4.13 oder Contao 5 und PHP 7.4 oder neuer voraus.
 Nach dem Einspielen sind ein Datenbankabgleich (`contao:migrate`) und

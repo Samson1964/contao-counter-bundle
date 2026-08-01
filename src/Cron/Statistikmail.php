@@ -150,20 +150,31 @@ final class Statistikmail
 	 * am Monatsersten der abgelaufene Monat. Beides wird bewusst erst nach
 	 * Ablauf des Zeitraums verschickt, damit die Zahlen vollständig sind.
 	 *
+	 * **Reihenfolge: das Seltenste zuerst.** Jeder Zeitraum kostet einen
+	 * Durchlauf durch die gesamte Zählertabelle. Läuft der Cronjob über eine
+	 * Weboberfläche, kann ihn ein PHP-Zeitlimit mittendrin abschneiden. Dann
+	 * soll die Tagesstatistik ausfallen — die kommt morgen wieder — und nicht
+	 * die Monatsstatistik, die dann für immer fehlt. Genau das ist am
+	 * 01.08.2026 passiert.
+	 *
 	 * @return array Liste aus ['bezeichnung' => Text für den Betreff,
-	 *               'pfade' => Pfade ins Zählerarray]
+	 *               'pfade' => Pfade ins Zählerarray], Monat vor Woche vor Tag
 	 */
 	private function zeitraeume(): array
 	{
 		$jetzt = time();
 		$zeitraeume = [];
 
-		// Vortag
-		$gestern = strtotime('-1 day', $jetzt);
-		$zeitraeume[] = [
-			'bezeichnung' => date('d.m.Y', $gestern),
-			'pfade'       => [self::tagespfad($gestern)],
-		];
+		// Am Monatsersten: der abgelaufene Monat
+		if ('1' === date('j', $jetzt))
+		{
+			$vormonat = strtotime('-1 month', (int) mktime(0, 0, 0, (int) date('n', $jetzt), 1, (int) date('Y', $jetzt)));
+
+			$zeitraeume[] = [
+				'bezeichnung' => self::MONATE[(int) date('n', $vormonat)].' '.date('Y', $vormonat),
+				'pfade'       => [[(int) date('Y', $vormonat), (int) date('n', $vormonat), 'all']],
+			];
+		}
 
 		// Montags: die vergangene Woche von Montag bis Sonntag
 		if ('1' === date('N', $jetzt))
@@ -182,16 +193,12 @@ final class Statistikmail
 			];
 		}
 
-		// Am Monatsersten: der abgelaufene Monat
-		if ('1' === date('j', $jetzt))
-		{
-			$vormonat = strtotime('-1 month', (int) mktime(0, 0, 0, (int) date('n', $jetzt), 1, (int) date('Y', $jetzt)));
-
-			$zeitraeume[] = [
-				'bezeichnung' => self::MONATE[(int) date('n', $vormonat)].' '.date('Y', $vormonat),
-				'pfade'       => [[(int) date('Y', $vormonat), (int) date('n', $vormonat), 'all']],
-			];
-		}
+		// Vortag — steht bewusst zuletzt
+		$gestern = strtotime('-1 day', $jetzt);
+		$zeitraeume[] = [
+			'bezeichnung' => date('d.m.Y', $gestern),
+			'pfade'       => [self::tagespfad($gestern)],
+		];
 
 		return $zeitraeume;
 	}
@@ -226,13 +233,49 @@ final class Statistikmail
 		$anzahl = (int) (Config::get('counter_mail_anzahl') ?: 50);
 		$ergebnis = Bestenliste::auswerten($quelle, $zeitraum['pfade'], $anzahl);
 
-		if (!$ergebnis['zeilen'])
+		self::versendeErgebnis($quelle, $zeitraum['bezeichnung'], $ergebnis, $anzahl, $empfaenger, $kopie);
+	}
+
+	/**
+	 * Verschickt eine bereits ausgewertete Bestenliste.
+	 *
+	 * Von hier aus gehen sowohl die Mails des Cronjobs hinaus als auch die,
+	 * die im Backend von Hand ausgelöst werden. Der Unterschied liegt nur
+	 * darin, woher die Auswertung stammt: Der Cronjob rechnet sie frisch aus,
+	 * das Backend reicht die bereits angezeigte (und zwischengespeicherte)
+	 * Auswertung durch — deshalb dauert der Versand von Hand nur Sekunden und
+	 * läuft nicht in ein Zeitlimit.
+	 *
+	 * Enthält die Auswertung keine Zeile, wird nichts verschickt — eine leere
+	 * Tabelle im Postfach hilft niemandem.
+	 *
+	 * @param string $quelle     Tabellenname: tl_page, tl_article oder tl_news
+	 * @param string $zeitraum   Beschreibung des Zeitraums für Betreff und Text,
+	 *                           etwa „Juli 2026“ oder „31.07.2026“
+	 * @param array  $ergebnis   Auswertung aus Helper\Bestenliste (zeilen, gesamt)
+	 * @param int    $anzahl     Zahl der Listenplätze, nur für die Überschrift
+	 * @param array  $empfaenger Empfängeradressen; eine leere Liste bricht ab
+	 * @param array  $kopie      Adressen, die eine Kopie erhalten; darf leer sein
+	 *
+	 * @return string Leerer String bei Erfolg, sonst der Grund des Fehlschlags
+	 *                im Klartext. Fehler werden zusätzlich protokolliert und
+	 *                bewusst nicht geworfen: Ein nicht erreichbarer Mailserver
+	 *                darf weder den Cronjob abbrechen noch das Backend zerlegen
+	 */
+	public static function versendeErgebnis(string $quelle, string $zeitraum, array $ergebnis, int $anzahl, array $empfaenger, array $kopie = []): string
+	{
+		if (!$empfaenger)
 		{
-			return;
+			return 'Es ist kein Empfänger angegeben.';
+		}
+
+		if (empty($ergebnis['zeilen']))
+		{
+			return 'Für diesen Zeitraum sind keine Zugriffe gezählt, es gibt nichts zu verschicken.';
 		}
 
 		$bezeichnung = Inhalte::eigenschaft($quelle, 'name');
-		$titel = 'Top-'.$anzahl.' '.$bezeichnung.' '.$zeitraum['bezeichnung'];
+		$titel = 'Top-'.$anzahl.' '.$bezeichnung.' '.$zeitraum;
 
 		$template = new FrontendTemplate((string) (Config::get('counter_mail_template') ?: 'counter_mail_standard'));
 
@@ -240,9 +283,9 @@ final class Statistikmail
 		$template->bezeichnung = $bezeichnung;
 		$template->einzahl = Inhalte::eigenschaft($quelle, 'einzahl');
 		$template->spalteZusatz = Inhalte::eigenschaft($quelle, 'zusatz');
-		$template->zeitraum = $zeitraum['bezeichnung'];
+		$template->zeitraum = $zeitraum;
 		$template->gesamt = $ergebnis['gesamt'];
-		$template->zeilen = $this->faerbe($ergebnis['zeilen']);
+		$template->zeilen = self::faerbe($ergebnis['zeilen']);
 		$template->istArtikel = ('tl_article' === $quelle);
 
 		$mail = new Email();
@@ -262,10 +305,56 @@ final class Statistikmail
 		}
 		catch (\Exception $e)
 		{
-			// Ein nicht erreichbarer Mailserver darf den Cronjob nicht
-			// abbrechen — die übrigen Mails sollen trotzdem hinausgehen
 			Protokoll::fehler('Counter: Statistik-Mail "'.$titel.'" konnte nicht verschickt werden: '.$e->getMessage(), __METHOD__);
+
+			return 'Der Versand ist gescheitert: '.$e->getMessage();
 		}
+
+		return '';
+	}
+
+	/**
+	 * Liefert die eingestellten Empfänger einer Inhaltsart.
+	 *
+	 * @param string $quelle Tabellenname: tl_page, tl_article oder tl_news
+	 * @param bool   $kopie  true liefert die Kopieempfänger statt der Empfänger
+	 *
+	 * @return array Liste der Adressen, leer wenn nichts gepflegt ist
+	 */
+	public static function eingestellteAdressen(string $quelle, bool $kopie = false): array
+	{
+		return self::adressen(self::einstellung($quelle, $kopie ? 'counter_mail_kopie_' : 'counter_mail_empfaenger_'));
+	}
+
+	/**
+	 * Zerlegt eine Adresseingabe in einzelne Empfänger.
+	 *
+	 * Erlaubt sind Kommas und Zeilenumbrüche als Trennzeichen sowie die von
+	 * Contao unterstützte Schreibweise „Name <adresse@example.org>“.
+	 *
+	 * Öffentlich, weil das Backend die im Versandformular eingetippten
+	 * Adressen mit denselben Regeln zerlegen muss wie die eingestellten.
+	 *
+	 * @param string $eingabe Rohwert aus den Einstellungen oder dem Formular
+	 *
+	 * @return array Liste der Adressen, leer wenn nichts Brauchbares drinsteht
+	 */
+	public static function adressen(string $eingabe): array
+	{
+		$teile = preg_split('/[,\r\n]+/', $eingabe) ?: [];
+		$adressen = [];
+
+		foreach ($teile as $teil)
+		{
+			$teil = trim($teil);
+
+			if ('' !== $teil)
+			{
+				$adressen[] = $teil;
+			}
+		}
+
+		return $adressen;
 	}
 
 	/**
@@ -279,7 +368,7 @@ final class Statistikmail
 	 *
 	 * @return array Dieselben Zeilen, jeweils um den Schlüssel „farbe“ ergänzt
 	 */
-	private function faerbe(array $zeilen): array
+	private static function faerbe(array $zeilen): array
 	{
 		$jetzt = time();
 
@@ -303,31 +392,4 @@ final class Statistikmail
 		return $zeilen;
 	}
 
-	/**
-	 * Zerlegt eine Adresseingabe in einzelne Empfänger.
-	 *
-	 * Erlaubt sind Kommas und Zeilenumbrüche als Trennzeichen sowie die von
-	 * Contao unterstützte Schreibweise „Name <adresse@example.org>“.
-	 *
-	 * @param string $eingabe Rohwert aus den Einstellungen
-	 *
-	 * @return array Liste der Adressen, leer wenn nichts Brauchbares drinsteht
-	 */
-	private static function adressen(string $eingabe): array
-	{
-		$teile = preg_split('/[,\r\n]+/', $eingabe) ?: [];
-		$adressen = [];
-
-		foreach ($teile as $teil)
-		{
-			$teil = trim($teil);
-
-			if ('' !== $teil)
-			{
-				$adressen[] = $teil;
-			}
-		}
-
-		return $adressen;
-	}
 }

@@ -15,6 +15,7 @@ use Contao\BackendTemplate;
 use Contao\Config;
 use Contao\Input;
 use Contao\System;
+use Schachbulle\ContaoCounterBundle\Cron\Statistikmail;
 use Schachbulle\ContaoCounterBundle\Helper\Bestenliste;
 use Schachbulle\ContaoCounterBundle\Helper\Diagramm;
 use Schachbulle\ContaoCounterBundle\Helper\Inhalte;
@@ -120,7 +121,102 @@ abstract class Statistik
 		$template->kannVor = $this->verschieben($ebene, $zeitpunkt, 1) <= time();
 		$template->urlZurueckModul = 'contao?do='.Inhalte::eigenschaft($this->quelle(), 'modul').'&amp;rt='.self::requestToken();
 
+		$this->versand($template, $ebene, $zeitpunkt, $ergebnis);
+
 		return $template->parse();
+	}
+
+	/**
+	 * Bereitet den Versand der angezeigten Statistik von Hand vor.
+	 *
+	 * Ablauf in drei Schritten: Der Knopf „Per E-Mail versenden“ ruft dieselbe
+	 * Ansicht mit &versenden=1 auf; dort erscheint ein Formular mit den
+	 * eingestellten Empfängern, die für diesen einen Versand noch geändert
+	 * werden können; nach dem Absenden geht die Mail hinaus und es erscheint
+	 * eine Rückmeldung.
+	 *
+	 * Verschickt wird genau das, was auf dem Bildschirm steht — die
+	 * Auswertung ist bereits errechnet und liegt im Zwischenspeicher. Damit
+	 * dauert der Versand von Hand nur Sekunden und läuft nicht in ein
+	 * PHP-Zeitlimit, anders als der nächtliche Cronjob, der alles neu rechnet.
+	 *
+	 * Die im Formular geänderten Adressen gelten nur für diesen Versand; die
+	 * dauerhaften Empfänger stehen unter System -> Einstellungen.
+	 *
+	 * @param BackendTemplate $template  Template der Ansicht
+	 * @param string          $ebene     jahr, monat oder tag
+	 * @param int             $zeitpunkt Angezeigter Zeitpunkt
+	 * @param array           $ergebnis  Bereits errechnete Auswertung
+	 *
+	 * @return void Setzt versandUrl, versandFormular, versandMeldung und
+	 *              versandFehler am Template
+	 */
+	protected function versand(BackendTemplate $template, string $ebene, int $zeitpunkt, array $ergebnis): void
+	{
+		$template->versandUrl = $this->url($ebene, $zeitpunkt).'&amp;versenden=1';
+		// Abbrechen führt zurück auf denselben Zeitraum, nicht auf heute
+		$template->versandAbbruchUrl = $this->url($ebene, $zeitpunkt);
+		$template->versandFormular = null;
+		$template->versandMeldung = '';
+		$template->versandFehler = '';
+		$template->requestToken = self::requestToken();
+
+		// Ohne Daten gibt es nichts zu verschicken — dann auch keinen Knopf
+		if (empty($ergebnis['zeilen']))
+		{
+			$template->versandUrl = '';
+
+			return;
+		}
+
+		$quelle = $this->quelle();
+		$zeitraum = $template->zeitraum;
+
+		if ('counter_versand' === Input::post('FORM_SUBMIT'))
+		{
+			// postRaw statt post: In „Name <adresse@example.org>“ würden die
+			// spitzen Klammern sonst zu Entities und die Adresse unbrauchbar
+			$an = Statistikmail::adressen((string) Input::postRaw('empfaenger'));
+			$kopie = Statistikmail::adressen((string) Input::postRaw('kopie'));
+
+			$fehler = Statistikmail::versendeErgebnis(
+				$quelle,
+				$zeitraum,
+				$ergebnis,
+				Inhalte::anzahl($quelle),
+				$an,
+				$kopie
+			);
+
+			if ('' === $fehler)
+			{
+				$template->versandMeldung = 'Die Statistik „'.$zeitraum.'“ wurde an '
+					.implode(', ', $an).' verschickt.'
+					.($kopie ? ' Kopie an '.implode(', ', $kopie).'.' : '');
+
+				return;
+			}
+
+			$template->versandFehler = $fehler;
+
+			// Bei einem Fehlschlag das Formular mit den Eingaben erneut zeigen
+			$template->versandFormular = [
+				'empfaenger' => (string) Input::postRaw('empfaenger'),
+				'kopie'      => (string) Input::postRaw('kopie'),
+				'zeitraum'   => $zeitraum,
+			];
+
+			return;
+		}
+
+		if (Input::get('versenden'))
+		{
+			$template->versandFormular = [
+				'empfaenger' => implode("\n", Statistikmail::eingestellteAdressen($quelle)),
+				'kopie'      => implode("\n", Statistikmail::eingestellteAdressen($quelle, true)),
+				'zeitraum'   => $zeitraum,
+			];
+		}
 	}
 
 	/**

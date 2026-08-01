@@ -44,6 +44,11 @@ Das Diagramm zeigt jeweils die nächstfeinere Einteilung: die 24 Stunden eines T
 eines Monats oder die zwölf Monate eines Jahres. Es entsteht als SVG auf dem Server und
 braucht kein Javascript.
 
+Der Knopf **per E-Mail versenden** schickt genau den angezeigten Zeitraum an die eingestellten
+Empfänger. Vor dem Abschicken erscheinen die Adressen und lassen sich für diesen einen Versand
+ändern — die dauerhaften Empfänger bleiben davon unberührt. Weil die Auswertung zu diesem
+Zeitpunkt bereits errechnet ist, geht die Mail sofort hinaus.
+
 Die Auswertung wird zwischengespeichert — der laufende Zeitraum eine Stunde, abgeschlossene
 Zeiträume einen Tag.
 
@@ -72,6 +77,13 @@ Grau (älter als ein Jahr).
 
 Voraussetzung ist ein eingerichteter Contao-Cronjob (Contao-Manager oder ein Aufruf von
 `contao:cron` durch den Hoster).
+
+Die Zeiträume werden dabei **vom seltensten zum häufigsten** abgearbeitet: erst der Vormonat,
+dann die Vorwoche, zuletzt der Vortag. Jeder Zeitraum kostet einen Durchlauf durch die gesamte
+Zählertabelle; schneidet ein PHP-Zeitlimit den Lauf ab, fällt so die Tagesstatistik aus — die
+morgen wiederkommt — statt der Monatsstatistik, die dann für immer fehlte. Wer ganz sicher
+gehen will, ruft `contao:cron` über die Konsole auf; dort gibt es kein Zeitlimit. Und was
+trotzdem einmal liegen bleibt, lässt sich über den Versandknopf in der Statistik nachholen.
 
 ## Weitere Einstellungen
 

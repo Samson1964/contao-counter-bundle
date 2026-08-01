@@ -34,8 +34,52 @@
 			<span class="fhc-stat-knopf gesperrt" aria-disabled="true">vor&nbsp;&#9654;</span>
 		<?php endif; ?>
 
+		<?php if($this->versandUrl && !$this->versandFormular): ?>
+			<a href="<?= $this->versandUrl ?>" class="fhc-stat-knopf" title="Die angezeigte Statistik per E-Mail verschicken">&#9993;&nbsp;per E-Mail versenden</a>
+		<?php endif; ?>
+
 		<span class="fhc-stat-hinweis">Stand: <?= $this->cacheDatum ?></span>
 	</div>
+
+	<?php if($this->versandMeldung): ?>
+		<p class="tl_confirm"><?= $this->versandMeldung ?></p>
+	<?php endif; ?>
+
+	<?php if($this->versandFehler): ?>
+		<p class="tl_error"><?= $this->versandFehler ?></p>
+	<?php endif; ?>
+
+	<?php if($this->versandFormular): ?>
+		<form method="post" action="<?= $this->versandUrl ?>" class="fhc-stat-versand">
+			<input type="hidden" name="FORM_SUBMIT" value="counter_versand">
+			<input type="hidden" name="REQUEST_TOKEN" value="<?= $this->requestToken ?>">
+
+			<h3>Statistik „<?= $this->versandFormular['zeitraum'] ?>“ verschicken</h3>
+
+			<p class="tl_help">
+				Verschickt wird die Bestenliste, die unten steht — sie ist bereits errechnet
+				und geht deshalb sofort hinaus. Die Adressen stammen aus den Einstellungen und
+				können für diesen einen Versand geändert werden; dauerhaft ändern lassen sie
+				sich unter System &rarr; Einstellungen. Eine Adresse je Zeile.
+			</p>
+
+			<div class="fhc-stat-versand-felder">
+				<label>
+					<span>Empfänger</span>
+					<textarea name="empfaenger" rows="4" placeholder="name@example.org"><?= $this->versandFormular['empfaenger'] ?></textarea>
+				</label>
+				<label>
+					<span>Empfänger in Kopie</span>
+					<textarea name="kopie" rows="4" placeholder="(niemand)"><?= $this->versandFormular['kopie'] ?></textarea>
+				</label>
+			</div>
+
+			<div class="fhc-stat-versand-knoepfe">
+				<button type="submit" class="tl_submit">Jetzt verschicken</button>
+				<a href="<?= $this->versandAbbruchUrl ?>" class="fhc-stat-knopf">Abbrechen</a>
+			</div>
+		</form>
+	<?php endif; ?>
 
 	<?php if(!$this->hatDaten): ?>
 

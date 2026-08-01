@@ -2,6 +2,32 @@
 
 ## Offene Aufgaben
 
+* Der nächtliche Cronjob rechnet jeden Zeitraum neu aus und kann bei großen
+  Beständen an ein PHP-Zeitlimit stoßen. Entschärft ist das bisher durch die
+  Reihenfolge (Monat vor Woche vor Tag, damit ein Abbruch die Tagesstatistik
+  trifft statt der Monatsstatistik) und durch den Versand von Hand. Sollte es
+  wieder klemmen, wäre der nächste Schritt, die Auswertungen des Cronjobs
+  ebenfalls zwischenzuspeichern oder ihn über die Konsole (`contao:cron`) statt
+  über die Weboberfläche laufen zu lassen — dort gibt es kein Zeitlimit.
+
+## Erledigte Aufgaben
+
+* **2026-08-01, Fassung 2.2.0**
+  * In den E-Mails waren die Rahmen der Tabellenzellen besonders bei grünen
+    Zellen schlecht zu sehen — jetzt rundum ein dunkelgrauer Rahmen.
+  * Versandmöglichkeit in den Statistiken: Ein Knopf verschickt die gerade
+    angezeigte Statistik. Vor dem Versand werden die vorkonfigurierten Empfänger
+    angezeigt und lassen sich bearbeiten. Ein Zeitlimit droht dabei nicht, weil
+    die Daten aus dem Zwischenspeicher kommen.
+
+* **2026-08-01, Fassung 2.1.0**
+  * Empfänger und Kopieempfänger je Inhaltsart getrennt pflegbar.
+
+* **2026-08-01, Fassung 2.0.2**
+  * Der Haken „Statistik per E-Mail verschicken“ ließ sich nicht setzen: Das
+    Feld war nicht als Auswahlfeld angemeldet, der Ajax-Aufruf endete mit
+    HTTP 400.
+
 * Livetest auf schachbund.de: Nach dem Einspielen von 2.0.0 prüfen, ob die
   Zählstände weiterlaufen und die drei Backend-Statistiken die gewohnten Zahlen
   zeigen. Besonders die Nachrichtenzählung, weil sie den Alias aus der Adresse
@@ -17,9 +43,7 @@
   `parseArticles`-Hook, das ändert aber die Zuordnung bestehender Zählstände —
   nur zusammen mit einer Umstellung angehen.
 
-## Erledigte Aufgaben
-
-* **2026-07-31, Fassung 2.0.0**
+* **2026-08-01, Fassung 2.0.0**
   * Anpassung an PHP 8, Contao 4.13 und Contao 5
   * SQL-Abfragen optimiert (Verbundindex, gezielte Spalten, keine N+1-Abfragen
     in den Statistiken, kein Schreiben des Zählerfelds bei Wiederkehrern)

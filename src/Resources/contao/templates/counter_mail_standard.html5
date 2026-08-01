@@ -20,7 +20,10 @@
  * deshalb stehen die Farben unmittelbar an den Elementen.
  */
 $schrift = 'font-family:Verdana,Calibri,Arial,sans-serif;';
-$zelle = $schrift.'font-size:13px;padding:6px 10px;border-bottom:1px solid #d8d8d8;';
+// Kräftiges Grau für die Zellenrahmen: Auf den hellgrünen Zeilen der frischen
+// Inhalte war ein zartes Grau praktisch unsichtbar, die Tabelle zerfiel dort
+// optisch. Rundum statt nur unten, damit auch die Spalten getrennt sind.
+$zelle = $schrift.'font-size:13px;padding:6px 10px;border:1px solid #4a4a4a;';
 $kopf = $zelle.'background:#1F618D;color:#ffffff;font-weight:bold;text-align:left;';
 ?>
 <div style="<?= $schrift ?>font-size:13px;color:#1f1f1f;max-width:820px;">
@@ -32,7 +35,7 @@ $kopf = $zelle.'background:#1F618D;color:#ffffff;font-weight:bold;text-align:lef
 		im Zeitraum <?= $this->zeitraum ?>
 	</p>
 
-	<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;border:1px solid #d8d8d8;">
+	<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;border:1px solid #333333;">
 		<tr>
 			<th style="<?= $kopf ?>width:40px;text-align:right;">Pl.</th>
 			<th style="<?= $kopf ?>width:80px;text-align:right;">Zugriffe</th>
