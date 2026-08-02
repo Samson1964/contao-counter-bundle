@@ -41,6 +41,13 @@ use Schachbulle\ContaoCounterBundle\Helper\Protokoll;
  * Alles steht unter System -> Einstellungen im Bereich „Zähler“. Eine
  * Inhaltsart ohne Empfänger wird übersprungen; ohne jeden Empfänger bricht der
  * Cronjob still ab.
+ *
+ * @phpstan-import-type Pfad from Bestenliste
+ * @phpstan-import-type Zeile from Bestenliste
+ * @phpstan-import-type Ergebnis from Bestenliste
+ *
+ * @phpstan-type Zeitraum array{bezeichnung: string, pfade: list<Pfad>}
+ * @phpstan-type GefaerbteZeile array{platz: int, hits: int, id: int, titel: string, zusatz: string, tstamp: int, datum: string, css: string, farbe: string}
  */
 final class Statistikmail
 {
@@ -159,6 +166,8 @@ final class Statistikmail
 	 *
 	 * @return array Liste aus ['bezeichnung' => Text für den Betreff,
 	 *               'pfade' => Pfade ins Zählerarray], Monat vor Woche vor Tag
+	 *
+	 * @phpstan-return list<Zeitraum>
 	 */
 	private function zeitraeume(): array
 	{
@@ -209,6 +218,8 @@ final class Statistikmail
 	 * @param int $zeitpunkt Beliebiger Zeitstempel innerhalb des Tages
 	 *
 	 * @return array Pfad in der Form [Jahr, Monat, Tag, 'all']
+	 *
+	 * @phpstan-return Pfad
 	 */
 	private static function tagespfad(int $zeitpunkt): array
 	{
@@ -225,6 +236,10 @@ final class Statistikmail
 	 * @param array  $zeitraum   Eintrag aus zeitraeume()
 	 * @param array  $empfaenger Empfängeradressen dieser Inhaltsart, nie leer
 	 * @param array  $kopie      Adressen, die eine Kopie erhalten; darf leer sein
+	 *
+	 * @phpstan-param Zeitraum     $zeitraum
+	 * @phpstan-param list<string> $empfaenger
+	 * @phpstan-param list<string> $kopie
 	 *
 	 * @return void
 	 */
@@ -256,6 +271,10 @@ final class Statistikmail
 	 * @param int    $anzahl     Zahl der Listenplätze, nur für die Überschrift
 	 * @param array  $empfaenger Empfängeradressen; eine leere Liste bricht ab
 	 * @param array  $kopie      Adressen, die eine Kopie erhalten; darf leer sein
+	 *
+	 * @phpstan-param Ergebnis     $ergebnis
+	 * @phpstan-param list<string> $empfaenger
+	 * @phpstan-param list<string> $kopie
 	 *
 	 * @return string Leerer String bei Erfolg, sonst der Grund des Fehlschlags
 	 *                im Klartext. Fehler werden zusätzlich protokolliert und
@@ -320,6 +339,8 @@ final class Statistikmail
 	 * @param bool   $kopie  true liefert die Kopieempfänger statt der Empfänger
 	 *
 	 * @return array Liste der Adressen, leer wenn nichts gepflegt ist
+	 *
+	 * @phpstan-return list<string>
 	 */
 	public static function eingestellteAdressen(string $quelle, bool $kopie = false): array
 	{
@@ -338,6 +359,8 @@ final class Statistikmail
 	 * @param string $eingabe Rohwert aus den Einstellungen oder dem Formular
 	 *
 	 * @return array Liste der Adressen, leer wenn nichts Brauchbares drinsteht
+	 *
+	 * @phpstan-return list<string>
 	 */
 	public static function adressen(string $eingabe): array
 	{
@@ -366,7 +389,11 @@ final class Statistikmail
 	 *
 	 * @param array $zeilen Zeilen aus Helper\Bestenliste
 	 *
+	 * @phpstan-param list<Zeile> $zeilen
+	 *
 	 * @return array Dieselben Zeilen, jeweils um den Schlüssel „farbe“ ergänzt
+	 *
+	 * @phpstan-return list<GefaerbteZeile>
 	 */
 	private static function faerbe(array $zeilen): array
 	{

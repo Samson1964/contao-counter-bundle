@@ -1,0 +1,27 @@
+# Statische Analyse des Counter-Bundles.
+#
+# Aufruf (PHPStan muss verfügbar sein, siehe composer.json require-dev):
+#   vendor/bin/phpstan analyse
+#
+# Die Analyse braucht eine Contao-Installation zum Nachschlagen der Klassen.
+# Läuft sie außerhalb einer solchen, den Pfad in bootstrapFiles anpassen.
+#
+# Stand 01.08.2026: Level 8 ohne Beanstandung, geprüft gegen Contao 4.13 und 5.7
+# mit phpVersion 70400, 80000 und 80300. Level 9 wäre nur mit durchgehender
+# Typisierung von $GLOBALS und Config::get() zu erreichen — beides gibt Contao
+# als mixed heraus, das lohnt den Aufwand hier nicht.
+parameters:
+    level: 8
+    paths:
+        - src
+    bootstrapFiles:
+        - vendor/autoload.php
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # Contao arbeitet durchgängig mit magischen Eigenschaften:
+        # Database\Result liefert die Spalten, Module die Moduleinstellungen,
+        # Template die zugewiesenen Variablen. Das ist kein Mangel, sondern
+        # das Programmiermodell des Systems.
+        - '#Access to an undefined property Contao\\Database\\Result::#'
+        - '#Access to an undefined property Contao\\(Backend|Frontend)?Template::#'
+        - '#Access to an undefined property Schachbulle\\ContaoCounterBundle\\Classes\\(Frontend|Register)::\$fhc_#'

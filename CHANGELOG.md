@@ -1,5 +1,37 @@
 # Counter Changelog
 
+## Version 2.3.0 (2026-08-01)
+
+Diese Fassung ändert nichts am Verhalten. Sie belegt die Lauffähigkeit und
+härtet den Code gegen Fehler, die bisher nur nicht aufgetreten waren.
+
+* Change: **Lauffähigkeit nachgewiesen statt behauptet.** Alle Codepfade
+  inklusive der Randfälle (kaputte Zählerdaten, leere Zeiträume, unbekannte
+  Quellen, Schaltjahr, Datum in der Zukunft) laufen unter **PHP 8.3 mit
+  Contao 4.13 und Contao 5.7** ohne eine einzige Warnung, Notiz oder
+  Deprecation. Die in der composer.json angegebene Untergrenze PHP 7.4 ist
+  ebenfalls geprüft — es kommt keine Funktion und kein Sprachmittel aus PHP 8
+  zum Einsatz
+* Change: **Container-Dienste werden auf ihren Typ geprüft**, bevor Methoden
+  auf ihnen aufgerufen werden. Contaos Container liefert `object|null`; bisher
+  hätte ein fehlender oder ausgetauschter Dienst einen Fatal Error ergeben,
+  jetzt gibt es einen sauberen Rückfall. Betrifft Request-Stack, ScopeMatcher,
+  TokenChecker, Monolog und den CSRF-Tokenmanager
+* Change: `Zaehlwerk::aktuelleSeite()` liefert jetzt verlässlich ein
+  `PageModel` oder null statt eines beliebigen Objekts. Die globale Variable
+  `$objPage` wird auf ihren Typ geprüft, bevor sie verwendet wird — es gibt
+  Fremdcode, der sie überschreibt
+* Change: Der Pfad des Zwischenspeichers wird geprüft, statt blind in eine
+  Zeichenkette umgewandelt zu werden. `getParameter()` darf laut Schnittstelle
+  auch Arrays liefern
+* Change: Eigenschaften des Zählwerks als native Typen (PHP 7.4) statt nur als
+  Kommentar — sie werden damit zur Laufzeit erzwungen
+* Change: Die Datenstrukturen, die durch das Bundle wandern (Bestenliste,
+  Auswertung, Zeiträume, Pfade), sind jetzt durchgehend beschrieben und an
+  einer Stelle festgelegt. Damit hält das Bundle **PHPStan Level 8** ohne
+  Beanstandung; die Messlatte liegt als `phpstan.neon.dist` bei und lässt sich
+  mit `composer phpstan` jederzeit nachprüfen
+
 ## Version 2.2.0 (2026-08-01)
 
 * Add: **Versand von Hand aus der Backend-Statistik.** Der Knopf „per E-Mail

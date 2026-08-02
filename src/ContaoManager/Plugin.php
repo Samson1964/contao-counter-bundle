@@ -34,6 +34,8 @@ class Plugin implements BundlePluginInterface
 	 *                                nicht gebraucht, gehört aber zur Schnittstelle
 	 *
 	 * @return array Liste mit der Bundle-Beschreibung
+	 *
+	 * @phpstan-return list<\Contao\ManagerPlugin\Bundle\Config\ConfigInterface>
 	 */
 	public function getBundles(ParserInterface $parser): array
 	{

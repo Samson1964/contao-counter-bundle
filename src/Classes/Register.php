@@ -12,9 +12,11 @@ declare(strict_types=1);
 namespace Schachbulle\ContaoCounterBundle\Classes;
 
 use Contao\BackendTemplate;
+use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Module;
 use Contao\System;
 use Schachbulle\ContaoCounterBundle\Helper\Zaehlwerk;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Frontend-Modul „Zählermodul“.
@@ -67,7 +69,7 @@ class Register extends Module
 	 */
 	protected function compile()
 	{
-		Zaehlwerk::protokolliere404($GLOBALS['objPage'] ?? null);
+		Zaehlwerk::protokolliere404(Zaehlwerk::aktuelleSeite());
 
 		$zaehlwerk = new Zaehlwerk(
 			(int) $this->fhc_onlinetime,
@@ -97,18 +99,21 @@ class Register extends Module
 	{
 		$container = System::getContainer();
 
-		if (null === $container || !$container->has('request_stack'))
+		if (null === $container || !$container->has('request_stack') || !$container->has('contao.routing.scope_matcher'))
 		{
 			return false;
 		}
 
-		$request = $container->get('request_stack')->getCurrentRequest();
+		$stack = $container->get('request_stack');
+		$matcher = $container->get('contao.routing.scope_matcher');
 
-		if (null === $request)
+		if (!$stack instanceof RequestStack || !$matcher instanceof ScopeMatcher)
 		{
 			return false;
 		}
 
-		return $container->get('contao.routing.scope_matcher')->isBackendRequest($request);
+		$request = $stack->getCurrentRequest();
+
+		return null !== $request && $matcher->isBackendRequest($request);
 	}
 }

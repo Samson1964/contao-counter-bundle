@@ -13,6 +13,7 @@ namespace Schachbulle\ContaoCounterBundle\Helper;
 
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\System;
+use Psr\Log\LoggerInterface;
 
 /**
  * Schreibt Meldungen ins Contao-Systemprotokoll.
@@ -47,7 +48,16 @@ final class Protokoll
 			return;
 		}
 
-		$container->get('monolog.logger.contao.error')->error(
+		$logger = $container->get('monolog.logger.contao.error');
+
+		// Typprüfung statt blindem Aufruf: Ohne sie stünde hier ein Fatal
+		// Error, falls der Dienst einmal etwas anderes liefert
+		if (!$logger instanceof LoggerInterface)
+		{
+			return;
+		}
+
+		$logger->error(
 			$nachricht,
 			['contao' => new ContaoContext($methode, ContaoContext::ERROR)]
 		);

@@ -12,6 +12,17 @@
 
 ## Erledigte Aufgaben
 
+* **2026-08-01, Fassung 2.3.0**
+  * Kompatibilität mit PHP 8.3 und Contao 4.13/5.7 nachgewiesen: alle
+    Codepfade samt Randfällen ohne Warnung, Notiz oder Deprecation. Die
+    Untergrenze PHP 7.4 aus der composer.json ist ebenfalls geprüft.
+  * PHP-Fehler beseitigt: Container-Dienste werden auf ihren Typ geprüft,
+    bevor Methoden auf ihnen aufgerufen werden; `$objPage` und der Cachepfad
+    ebenso. Vorher wären das im Störfall Fatal Errors gewesen.
+  * Code-Qualität: Datenstrukturen durchgehend beschrieben, native
+    Eigenschaftstypen, PHPStan Level 8 ohne Beanstandung
+    (`phpstan.neon.dist` liegt bei, Aufruf `composer phpstan`).
+
 * **2026-08-01, Fassung 2.2.0**
   * In den E-Mails waren die Rahmen der Tabellenzellen besonders bei grünen
     Zellen schlecht zu sehen — jetzt rundum ein dunkelgrauer Rahmen.

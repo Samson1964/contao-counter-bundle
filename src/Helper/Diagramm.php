@@ -45,6 +45,9 @@ final class Diagramm
 	 *                             Eine leere Liste ergibt einen leeren String,
 	 *                             damit der Aufrufer einen Hinweis zeigen kann
 	 *                             statt eines leeren Rahmens
+	 *
+	 * @phpstan-param list<array{titel: string|int, wert: int}> $balken
+	 *
 	 * @param string $beschriftung Kurztext für die Vorlesehilfe (aria-label),
 	 *                             z. B. „Zugriffe je Stunde“
 	 * @param string $farbe        Füllfarbe der Balken als Hex-Wert

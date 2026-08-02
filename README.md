@@ -15,6 +15,18 @@ composer require schachbulle/contao-counter-bundle
 
 Anschließend den Datenbankabgleich ausführen (Contao-Manager oder `contao:migrate`).
 
+Geprüft mit **Contao 4.13 und Contao 5.7 unter PHP 8.3**; die in der
+`composer.json` angegebene Untergrenze PHP 7.4 ist statisch mitgeprüft.
+
+## Entwicklung
+
+Die statische Analyse liegt als `phpstan.neon.dist` bei und läuft auf Level 8
+ohne Beanstandung:
+
+```bash
+composer phpstan
+```
+
 ## Zählung einrichten
 
 Counter besteht aus einem **Zählermodul** und einem **Ausgabemodul**. Beide finden Sie unter

@@ -13,8 +13,10 @@ namespace Schachbulle\ContaoCounterBundle\Modules;
 
 use Contao\BackendTemplate;
 use Contao\Config;
+use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\Input;
 use Contao\System;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Schachbulle\ContaoCounterBundle\Cron\Statistikmail;
 use Schachbulle\ContaoCounterBundle\Helper\Bestenliste;
 use Schachbulle\ContaoCounterBundle\Helper\Diagramm;
@@ -32,6 +34,14 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
  * Die Ansicht kennt drei Ebenen: ein Jahr, ein Monat oder ein einzelner Tag.
  * Das Diagramm zeigt jeweils die nächstfeinere Einteilung, also die zwölf
  * Monate eines Jahres, die Tage eines Monats oder die 24 Stunden eines Tages.
+ *
+ * @phpstan-import-type Pfad from Bestenliste
+ * @phpstan-import-type Achsenpunkt from Bestenliste
+ * @phpstan-import-type Zeile from Bestenliste
+ * @phpstan-import-type Verlaufswert from Bestenliste
+ * @phpstan-import-type Ergebnis from Bestenliste
+ *
+ * @phpstan-type AuswertungMitStand array{zeilen: list<Zeile>, gesamt: int, verlauf: list<Verlaufswert>, cacheDatum: string}
  */
 abstract class Statistik
 {
@@ -147,6 +157,8 @@ abstract class Statistik
 	 * @param string          $ebene     jahr, monat oder tag
 	 * @param int             $zeitpunkt Angezeigter Zeitpunkt
 	 * @param array           $ergebnis  Bereits errechnete Auswertung
+	 *
+	 * @phpstan-param Ergebnis $ergebnis
 	 *
 	 * @return void Setzt versandUrl, versandFormular, versandMeldung und
 	 *              versandFehler am Template
@@ -298,6 +310,8 @@ abstract class Statistik
 	 * @param int    $tag   Tag 1-31
 	 *
 	 * @return array Schlüssel zeilen, gesamt, verlauf und cacheDatum
+	 *
+	 * @phpstan-return AuswertungMitStand
 	 */
 	protected function auswerten(string $ebene, int $jahr, int $monat, int $tag): array
 	{
@@ -363,7 +377,16 @@ abstract class Statistik
 			return null;
 		}
 
-		return new FilesystemAdapter('counter_statistik', 0, (string) $container->getParameter('kernel.cache_dir'));
+		$verzeichnis = $container->getParameter('kernel.cache_dir');
+
+		// getParameter() liefert laut Schnittstelle auch Arrays und Zahlen.
+		// Eine blinde Umwandlung nach string wäre bei einem Array ein Fehler
+		if (!\is_string($verzeichnis) || '' === $verzeichnis)
+		{
+			return null;
+		}
+
+		return new FilesystemAdapter('counter_statistik', 0, $verzeichnis);
 	}
 
 	/**
@@ -375,6 +398,8 @@ abstract class Statistik
 	 * @param int    $tag   Tag 1-31
 	 *
 	 * @return array Liste mit genau einem Pfad
+	 *
+	 * @phpstan-return list<Pfad>
 	 */
 	protected function pfade(string $ebene, int $jahr, int $monat, int $tag): array
 	{
@@ -403,6 +428,8 @@ abstract class Statistik
 	 * @param int    $tag   Tag 1-31
 	 *
 	 * @return array Liste aus ['titel' => Beschriftung, 'pfad' => Pfad]
+	 *
+	 * @phpstan-return list<Achsenpunkt>
 	 */
 	protected function achse(string $ebene, int $jahr, int $monat, int $tag): array
 	{
@@ -524,6 +551,8 @@ abstract class Statistik
 	 * @param int    $zeitpunkt Angezeigter Zeitpunkt, bleibt beim Wechsel erhalten
 	 *
 	 * @return array Liste aus text, url und aktiv
+	 *
+	 * @phpstan-return list<array{text: string, url: string, aktiv: bool}>
 	 */
 	protected function ebenenLinks(string $aktuell, int $zeitpunkt): array
 	{
@@ -584,9 +613,16 @@ abstract class Statistik
 
 		$manager = $container->get('contao.csrf.token_manager');
 
+		if (!$manager instanceof CsrfTokenManagerInterface)
+		{
+			return '';
+		}
+
 		try
 		{
-			if (method_exists($manager, 'getDefaultTokenValue'))
+			// Contao 4.13 und 5 unterscheiden sich hier: Der ContaoCsrfTokenManager
+			// kennt getDefaultTokenValue(), die Symfony-Schnittstelle nur getToken()
+			if ($manager instanceof ContaoCsrfTokenManager)
 			{
 				return $manager->getDefaultTokenValue();
 			}

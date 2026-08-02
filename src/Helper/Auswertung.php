@@ -51,15 +51,15 @@ final class Auswertung
 
 	/**
 	 * Einstellungen des Ausgabemoduls
-	 * @var array
+	 *
+	 * @var array<string, bool>
 	 */
-	private $optionen;
+	private array $optionen;
 
 	/**
 	 * Aufrufzeitpunkt, einmal zerlegt
-	 * @var int
 	 */
-	private $zeit;
+	private int $zeit;
 
 	/**
 	 * Nimmt die Einstellungen des Ausgabemoduls entgegen.
@@ -68,6 +68,8 @@ final class Auswertung
 	 *                        pages, articles, news — welche Zähler ausgegeben werden;
 	 *                        infos, debug, diagramme, tabellen — welche Zusatzblöcke;
 	 *                        trennzeichen — Tausenderpunkte setzen
+	 *
+	 * @phpstan-param array<string, bool> $optionen
 	 */
 	public function __construct(array $optionen = [])
 	{
@@ -145,6 +147,8 @@ final class Auswertung
 	 * @param Template $template Ziel-Template
 	 * @param string   $praefix  '' , 'Page', 'Article' oder 'News'
 	 * @param array    $daten    Ein Eintrag aus $GLOBALS['fhcounter']
+	 *
+	 * @phpstan-param array<string, mixed> $daten
 	 *
 	 * @return void
 	 */
@@ -228,6 +232,8 @@ final class Auswertung
 	 * Stellt die Diagnosewerte für die Debug-Ausgabe zusammen.
 	 *
 	 * @return array Verschachteltes Array: Abschnitt -> Bezeichnung -> Wert
+	 *
+	 * @phpstan-return array<string, array<string, scalar|null>>
 	 */
 	private function debugdaten(): array
 	{

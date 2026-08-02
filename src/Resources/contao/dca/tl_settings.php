@@ -188,6 +188,8 @@ class tl_settings_counter extends Backend
 	 *
 	 * @return array Zuordnung Dateiname => Dateiname, wie von Contao für
 	 *               Auswahllisten erwartet
+	 *
+	 * @phpstan-return array<string, string>
 	 */
 	public function getMailTemplates(): array
 	{

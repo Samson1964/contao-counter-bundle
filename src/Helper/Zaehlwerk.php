@@ -13,11 +13,13 @@ namespace Schachbulle\ContaoCounterBundle\Helper;
 
 use Contao\ArticleModel;
 use Contao\Config;
+use Contao\CoreBundle\Security\Authentication\Token\TokenChecker;
 use Contao\Database;
 use Contao\Input;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Contao\System;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Das eigentliche Zählwerk.
@@ -43,53 +45,52 @@ final class Zaehlwerk
 
 	/**
 	 * Sekunden, die ein Besucher nach seinem Aufruf als „online“ gilt
-	 * @var int
 	 */
-	private $onlinezeit;
+	private int $onlinezeit;
 
 	/**
 	 * Sekunden, die vergehen müssen, bis derselbe Besucher erneut zählt
-	 * @var int
 	 */
-	private $sperrzeit;
+	private int $sperrzeit;
 
 	/**
 	 * Aufrufzeitpunkt. Wird einmal festgehalten, damit alle Zähler eines
 	 * Seitenaufrufs denselben Zeitstempel bekommen — sonst könnte ein Aufruf
 	 * kurz vor Mitternacht auf zwei Tage verteilt landen
-	 * @var int
 	 */
-	private $zeit;
+	private int $zeit;
 
 	/**
 	 * Zerlegter Aufrufzeitpunkt, so wie ihn das Zählerarray verschachtelt:
-	 * Jahr vierstellig, Monat/Tag/Stunde ohne führende Null
-	 * @var string
+	 * Jahr vierstellig, Monat/Tag/Stunde ohne führende Null.
+	 *
+	 * Bewusst Zeichenketten: date() liefert sie so, und als Array-Schlüssel
+	 * wandelt PHP sie ohnehin in Zahlen um. Eine Umwandlung hier würde die
+	 * vorhandenen Zählstände nicht verändern, aber unnötig Arbeit machen.
 	 */
-	private $jahr;
-	private $monat;
-	private $tag;
-	private $stunde;
+	private string $jahr;
+	private string $monat;
+	private string $tag;
+	private string $stunde;
 
 	/**
 	 * IP-Adresse des aktuellen Besuchers
-	 * @var string
 	 */
-	private $ip;
+	private string $ip;
 
 	/**
 	 * Ist gerade ein Backend-Benutzer im Frontend unterwegs?
-	 * @var bool
 	 */
-	private $beBenutzer = false;
+	private bool $beBenutzer = false;
 
 	/**
 	 * Zwischenspeicher der Weiterleitungsseiten aller Nachrichtenarchive.
 	 * Statisch, weil sich das innerhalb eines Seitenaufrufs nicht ändert und
-	 * die Abfrage sonst je Zähler erneut liefe
-	 * @var array|null
+	 * die Abfrage sonst je Zähler erneut liefe.
+	 *
+	 * @var list<int>|null
 	 */
-	private static $nachrichtenleser;
+	private static ?array $nachrichtenleser = null;
 
 	/**
 	 * Richtet das Zählwerk für einen Seitenaufruf ein.
@@ -391,7 +392,11 @@ final class Zaehlwerk
 	 *
 	 * @param array $counter Bisheriges Zählerarray, notfalls leer
 	 *
+	 * @phpstan-param array<int|string, mixed> $counter
+	 *
 	 * @return array Das erhöhte Zählerarray, immer mit Schlüssel „all“
+	 *
+	 * @phpstan-return array<int|string, mixed>
 	 */
 	private function erhoehe(array $counter): array
 	{
@@ -413,11 +418,11 @@ final class Zaehlwerk
 	 * Systemprotokoll. Abschaltbar über die Einstellung counter_donotlog404,
 	 * weil ein von Bots abgegraster Auftritt das Protokoll sonst zumüllt.
 	 *
-	 * @param PageModel|object $objPage Aktuelle Seite; nur der Typ wird geprüft
+	 * @param PageModel|null $objPage Aktuelle Seite. Ohne Seite passiert nichts
 	 *
 	 * @return void
 	 */
-	public static function protokolliere404($objPage): void
+	public static function protokolliere404(?PageModel $objPage): void
 	{
 		if (null === $objPage || 'error_404' !== $objPage->type)
 		{
@@ -446,18 +451,18 @@ final class Zaehlwerk
 	 * selbst. Die globale Variable $objPage dient nur noch als Rückfallebene
 	 * für ältere Aufrufwege.
 	 *
-	 * @return PageModel|object|null Die Seite oder null, wenn gerade keine
-	 *                               Frontend-Seite aufgebaut wird
+	 * @return PageModel|null Die Seite oder null, wenn gerade keine
+	 *                        Frontend-Seite aufgebaut wird
 	 */
-	private static function aktuelleSeite()
+	public static function aktuelleSeite(): ?PageModel
 	{
-		$container = System::getContainer();
+		$stack = self::dienst('request_stack', RequestStack::class);
 
-		if (null !== $container && $container->has('request_stack'))
+		if (null !== $stack)
 		{
-			$request = $container->get('request_stack')->getCurrentRequest();
+			$request = $stack->getCurrentRequest();
 
-			if (null !== $request && $request->attributes->has('pageModel'))
+			if (null !== $request)
 			{
 				$seite = $request->attributes->get('pageModel');
 
@@ -468,7 +473,42 @@ final class Zaehlwerk
 			}
 		}
 
-		return $GLOBALS['objPage'] ?? null;
+		// Rückfallebene für ältere Aufrufwege. Die Prüfung auf den Typ ist
+		// kein Misstrauen gegen Contao, sondern gegen Fremdcode, der die
+		// globale Variable überschreibt — das kommt vor
+		return ($GLOBALS['objPage'] ?? null) instanceof PageModel ? $GLOBALS['objPage'] : null;
+	}
+
+	/**
+	 * Holt einen Dienst aus dem Container und prüft seinen Typ.
+	 *
+	 * Contaos Container liefert `object|null`; wer darauf ohne Prüfung eine
+	 * Methode aufruft, bekommt im Zweifel einen Fatal Error. Diese Methode
+	 * liefert den Dienst nur, wenn er wirklich die erwartete Klasse hat, und
+	 * sonst null — der Aufrufer entscheidet dann, wie er ohne weitermacht.
+	 *
+	 * @param string $name    Dienstname im Container
+	 * @param string $klasse  Erwartete Klasse oder Schnittstelle
+	 *
+	 * @return object|null Der Dienst oder null, wenn es ihn nicht gibt oder er
+	 *                     einen anderen Typ hat
+	 *
+	 * @phpstan-template T of object
+	 * @phpstan-param class-string<T> $klasse
+	 * @phpstan-return T|null
+	 */
+	private static function dienst(string $name, string $klasse): ?object
+	{
+		$container = System::getContainer();
+
+		if (null === $container || !$container->has($name))
+		{
+			return null;
+		}
+
+		$dienst = $container->get($name);
+
+		return $dienst instanceof $klasse ? $dienst : null;
 	}
 
 	/**
@@ -508,11 +548,11 @@ final class Zaehlwerk
 	 * und bleibt es hier — eine Umstellung würde die vorhandenen Zählstände
 	 * auf schachbund.de gefährden.
 	 *
-	 * @param PageModel|object $objPage Aktuell aufgebaute Seite
+	 * @param PageModel $objPage Aktuell aufgebaute Seite
 	 *
 	 * @return int ID der Nachricht oder 0, wenn keine angezeigt wird
 	 */
-	private static function aktuelleNachricht($objPage): int
+	private static function aktuelleNachricht(PageModel $objPage): int
 	{
 		if (!\in_array((int) $objPage->id, self::nachrichtenleser(), true))
 		{
@@ -551,6 +591,8 @@ final class Zaehlwerk
 	 * sich die Archive zwischendurch nicht ändern.
 	 *
 	 * @return array Liste von Seiten-IDs, gegebenenfalls leer
+	 *
+	 * @phpstan-return list<int>
 	 */
 	private static function nachrichtenleser(): array
 	{
@@ -580,17 +622,14 @@ final class Zaehlwerk
 	 * Contao 5 nicht mehr zuverlässig; der TokenChecker des Kerns beantwortet
 	 * dieselbe Frage in beiden Versionen sauber.
 	 *
-	 * @return bool true, wenn ein Backend-Benutzer angemeldet ist
+	 * @return bool true, wenn ein Backend-Benutzer angemeldet ist. Ohne
+	 *              nutzbaren TokenChecker wird false angenommen — im Zweifel
+	 *              lieber mitzählen als eine Seite gar nicht zählen
 	 */
 	public static function istBackendBenutzer(): bool
 	{
-		$container = System::getContainer();
+		$pruefer = self::dienst('contao.security.token_checker', TokenChecker::class);
 
-		if (null === $container || !$container->has('contao.security.token_checker'))
-		{
-			return false;
-		}
-
-		return $container->get('contao.security.token_checker')->hasBackendUser();
+		return null !== $pruefer && $pruefer->hasBackendUser();
 	}
 }

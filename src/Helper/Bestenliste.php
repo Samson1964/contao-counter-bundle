@@ -27,6 +27,17 @@ use Contao\StringUtil;
  * [[2026, 7, 30, 'all']], ein Monat [[2026, 7, 'all']], eine Woche schlicht
  * sieben Tagespfade hintereinander. Damit deckt eine Methode alles ab, was
  * Backend-Statistik und Statistik-Mail brauchen.
+ *
+ * Die hier festgelegten Typnamen beschreiben die Datenstruktur, die durch das
+ * ganze Bundle wandert — von der Auswertung über die Backend-Ansicht bis in
+ * die E-Mail. Andere Klassen holen sie sich per @phpstan-import-type, damit
+ * die Beschreibung an genau einer Stelle steht.
+ *
+ * @phpstan-type Pfad list<int|string>
+ * @phpstan-type Achsenpunkt array{titel: string, pfad: Pfad}
+ * @phpstan-type Verlaufswert array{titel: string, wert: int}
+ * @phpstan-type Zeile array{platz: int, hits: int, id: int, titel: string, zusatz: string, tstamp: int, datum: string, css: string}
+ * @phpstan-type Ergebnis array{zeilen: list<Zeile>, gesamt: int, verlauf: list<Verlaufswert>}
  */
 final class Bestenliste
 {
@@ -42,10 +53,15 @@ final class Bestenliste
 	 *                        Werte werden über ALLE Inhalte addiert, nicht nur
 	 *                        über die der Rangliste
 	 *
+	 * @phpstan-param list<Pfad>        $pfade
+	 * @phpstan-param list<Achsenpunkt> $verlauf
+	 *
 	 * @return array Drei Schlüssel:
 	 *               zeilen  — Rangliste mit platz, hits, id, titel, zusatz, tstamp, datum, css
 	 *               gesamt  — Summe aller Zugriffe im Zeitraum
 	 *               verlauf — Liste aus titel und wert, in der Reihenfolge der Achse
+	 *
+	 * @phpstan-return Ergebnis
 	 */
 	public static function auswerten(string $quelle, array $pfade, int $anzahl, array $verlauf = []): array
 	{
@@ -135,6 +151,9 @@ final class Bestenliste
 	 *
 	 * @param array $counter Deserialisiertes Zählerarray eines Datensatzes
 	 * @param array $pfad    Schlüsselfolge, etwa [2026, 7, 30, 'all']
+	 *
+	 * @phpstan-param array<int|string, mixed> $counter
+	 * @phpstan-param Pfad                     $pfad
 	 *
 	 * @return int Gefundener Wert oder 0, wenn der Pfad ins Leere führt.
 	 *             Fehlende Zweige sind der Normalfall: ein Zähler enthält nur

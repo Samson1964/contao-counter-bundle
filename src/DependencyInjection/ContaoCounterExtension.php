@@ -29,6 +29,8 @@ class ContaoCounterExtension extends Extension
 	 *                                       wertet den Wert nicht aus
 	 * @param ContainerBuilder $container    Container, der die Dienste aufnimmt
 	 *
+	 * @phpstan-param array<string, mixed> $mergedConfig
+	 *
 	 * @return void
 	 */
 	public function load(array $mergedConfig, ContainerBuilder $container): void

@@ -21,11 +21,15 @@ use Contao\Database;
  * verschiedenen Spaltennamen. Damit weder die Backend-Statistik noch der
  * Cronjob für die Statistik-Mails das jeweils selbst wissen muss, steht die
  * Zuordnung hier gebündelt.
+ *
+ * @phpstan-type Detail array{titel: string, zusatz: string, tstamp: int}
  */
 final class Inhalte
 {
 	/**
 	 * Alle Quellen, die der Zähler kennt
+	 *
+	 * @var list<string>
 	 */
 	public const QUELLEN = ['tl_page', 'tl_article', 'tl_news'];
 
@@ -115,7 +119,11 @@ final class Inhalte
 	 * @param string $quelle Tabellenname, etwa tl_page
 	 * @param array  $ids    Liste der IDs. Eine leere Liste ergibt ein leeres Array
 	 *
+	 * @phpstan-param list<int> $ids
+	 *
 	 * @return array Zuordnung ID => ['titel' => string, 'zusatz' => string, 'tstamp' => int]
+	 *
+	 * @phpstan-return array<int, Detail>
 	 */
 	public static function details(string $quelle, array $ids): array
 	{
