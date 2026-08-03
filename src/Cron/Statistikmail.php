@@ -307,22 +307,27 @@ final class Statistikmail
 		$template->zeilen = self::faerbe($ergebnis['zeilen']);
 		$template->istArtikel = ('tl_article' === $quelle);
 
-		$mail = new Email();
-		$mail->from = (string) (Config::get('counter_mail_absender') ?: Config::get('adminEmail'));
-		$mail->fromName = (string) (Config::get('counter_mail_absendername') ?: 'Webstatistik');
-		$mail->subject = trim((string) Config::get('counter_mail_betreff').' '.$titel);
-		$mail->html = $template->parse();
-
-		if ($kopie)
-		{
-			$mail->sendCc(...$kopie);
-		}
-
+		// Der gesamte Mailaufbau steht in der Fehlerbehandlung, nicht nur das
+		// Absenden: Schon sendCc() prüft die Adressen und wirft bei einer
+		// unbrauchbaren eine Ausnahme. Stand der Aufruf davor, riss ein
+		// einziger fehlerhafter Kopieempfänger den ganzen Cronjob mit — auch
+		// die Mails, die danach noch hinausgegangen wären (04.08.2026).
 		try
 		{
+			$mail = new Email();
+			$mail->from = (string) (Config::get('counter_mail_absender') ?: Config::get('adminEmail'));
+			$mail->fromName = self::text((string) (Config::get('counter_mail_absendername') ?: 'Webstatistik'));
+			$mail->subject = trim(self::text((string) Config::get('counter_mail_betreff')).' '.$titel);
+			$mail->html = $template->parse();
+
+			if ($kopie)
+			{
+				$mail->sendCc(...$kopie);
+			}
+
 			$mail->sendTo(...$empfaenger);
 		}
-		catch (\Exception $e)
+		catch (\Throwable $e)
 		{
 			Protokoll::fehler('Counter: Statistik-Mail "'.$titel.'" konnte nicht verschickt werden: '.$e->getMessage(), __METHOD__);
 
@@ -330,6 +335,23 @@ final class Statistikmail
 		}
 
 		return '';
+	}
+
+	/**
+	 * Macht aus einem in tl_settings gespeicherten Text wieder Klartext.
+	 *
+	 * Contao legt Eingaben mit HTML-Entities ab (siehe adressen()). Für
+	 * Absendername und Betreffzusatz fällt das weniger auf als bei den
+	 * Adressen, sähe im Postfach aber genauso falsch aus — „Schach &amp; Co.“
+	 * statt „Schach & Co.“.
+	 *
+	 * @param string $wert Rohwert aus den Einstellungen
+	 *
+	 * @return string Klartext ohne HTML-Entities
+	 */
+	private static function text(string $wert): string
+	{
+		return html_entity_decode($wert, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 	}
 
 	/**
@@ -353,12 +375,26 @@ final class Statistikmail
 	 * Erlaubt sind Kommas und Zeilenumbrüche als Trennzeichen sowie die von
 	 * Contao unterstützte Schreibweise „Name <adresse@example.org>“.
 	 *
+	 * **Zwei Vorkehrungen, die beide aus einem Ausfall am 04.08.2026 stammen:**
+	 *
+	 * 1. Die Werte werden von HTML-Entities befreit. Contaos Input::post()
+	 *    ruft stripTags() auf — und zwar unabhängig von der Einstellung
+	 *    decodeEntities. Die spitze Klammer vor der Adresse sieht für
+	 *    stripTags wie ein unbekanntes Tag aus und wird zu „&lt;“, während
+	 *    die schließende Klammer stehen bleibt. Gespeichert steht dann
+	 *    „Name &lt;adresse@example.org>“ — für Symfony keine gültige Adresse.
+	 * 2. Offensichtlich unbrauchbare Adressen fliegen heraus, statt den
+	 *    Versand scheitern zu lassen. Eine falsch geschriebene Adresse darf
+	 *    nicht dazu führen, dass die übrigen Empfänger nichts bekommen.
+	 *
 	 * Öffentlich, weil das Backend die im Versandformular eingetippten
 	 * Adressen mit denselben Regeln zerlegen muss wie die eingestellten.
 	 *
 	 * @param string $eingabe Rohwert aus den Einstellungen oder dem Formular
 	 *
-	 * @return array Liste der Adressen, leer wenn nichts Brauchbares drinsteht
+	 * @return array Liste der brauchbaren Adressen, leer wenn nichts
+	 *               Verwertbares drinsteht. Aussortierte Einträge werden im
+	 *               Systemprotokoll vermerkt
 	 *
 	 * @phpstan-return list<string>
 	 */
@@ -369,15 +405,47 @@ final class Statistikmail
 
 		foreach ($teile as $teil)
 		{
-			$teil = trim($teil);
+			$teil = trim(html_entity_decode($teil, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
-			if ('' !== $teil)
+			if ('' === $teil)
 			{
-				$adressen[] = $teil;
+				continue;
 			}
+
+			if (!self::istAdresse($teil))
+			{
+				Protokoll::fehler('Counter: „'.$teil.'“ ist keine brauchbare E-Mail-Adresse und wird beim Versand übergangen.', __METHOD__);
+
+				continue;
+			}
+
+			$adressen[] = $teil;
 		}
 
 		return $adressen;
+	}
+
+	/**
+	 * Prüft, ob ein Eintrag als Empfängeradresse taugt.
+	 *
+	 * Akzeptiert die blanke Adresse ebenso wie die Schreibweise mit Namen
+	 * davor, also „adresse@example.org“ und „Name <adresse@example.org>“ —
+	 * beides versteht Contaos Email-Klasse.
+	 *
+	 * @param string $eintrag Bereits entschlüsselter und getrimmter Eintrag
+	 *
+	 * @return bool true, wenn der enthaltene Adressteil eine gültige
+	 *              E-Mail-Adresse ist
+	 */
+	private static function istAdresse(string $eintrag): bool
+	{
+		// Name davor? Dann nur den Teil in den spitzen Klammern prüfen
+		if (preg_match('/^.*<\s*([^<>]+)\s*>$/', $eintrag, $treffer))
+		{
+			$eintrag = trim($treffer[1]);
+		}
+
+		return false !== filter_var($eintrag, FILTER_VALIDATE_EMAIL);
 	}
 
 	/**

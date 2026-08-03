@@ -15,6 +15,7 @@ use Contao\BackendTemplate;
 use Contao\Config;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\Input;
+use Contao\StringUtil;
 use Contao\System;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Schachbulle\ContaoCounterBundle\Cron\Statistikmail;
@@ -202,9 +203,11 @@ abstract class Statistik
 
 			if ('' === $fehler)
 			{
-				$template->versandMeldung = 'Die Statistik „'.$zeitraum.'“ wurde an '
-					.implode(', ', $an).' verschickt.'
-					.($kopie ? ' Kopie an '.implode(', ', $kopie).'.' : '');
+				// Adressen maskieren: „Name <a@b.c>“ zerlegte sonst das Markup
+				// der Meldung, weil die spitzen Klammern als Tag gelesen würden
+				$template->versandMeldung = 'Die Statistik „'.StringUtil::specialchars($zeitraum).'“ wurde an '
+					.StringUtil::specialchars(implode(', ', $an)).' verschickt.'
+					.($kopie ? ' Kopie an '.StringUtil::specialchars(implode(', ', $kopie)).'.' : '');
 
 				return;
 			}

@@ -82,6 +82,11 @@ Vorlage und die Zahl der Listenplätze gelten für alle drei gemeinsam.
 Statistiken überhaupt hinausgehen: Wer nur die Nachrichtenstatistik braucht, trägt allein dort
 Adressen ein und lässt die übrigen Felder leer.
 
+Eine Adresse je Zeile, wahlweise nackt (`name@example.org`) oder mit Namen davor
+(`Name <name@example.org>`). Adressen, die offensichtlich unbrauchbar sind, werden beim
+Versand übergangen und mit Klartext im Systemprotokoll vermerkt — ein Tippfehler in einer
+Adresse verhindert also nicht mehr, dass die übrigen Empfänger ihre Mail bekommen.
+
 Das Layout steckt im Template `counter_mail_standard`. Eine eigene Fassung legen Sie unter
 `templates/` mit dem Namensanfang `counter_mail_` ab; sie erscheint dann in der Auswahlliste.
 Die Zeilenfarbe zeigt das Alter des Inhalts an, von Grün (ganz aktuell) über Gelb bis Rot und

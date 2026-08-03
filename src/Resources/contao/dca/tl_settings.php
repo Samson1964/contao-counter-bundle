@@ -135,16 +135,18 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_absender'] = [
 
 // Absendername
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_absendername'] = [
-	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_absendername'],
-	'inputType' => 'text',
-	'eval'      => ['maxlength' => 255, 'tl_class' => 'w50'],
+	'label'         => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_absendername'],
+	'inputType'     => 'text',
+	'eval'          => ['maxlength' => 255, 'tl_class' => 'w50'],
+	'save_callback' => [['tl_settings_counter', 'entschluesseln']],
 ];
 
 // Fester Zusatz vor der Betreffzeile
 $GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_betreff'] = [
-	'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_betreff'],
-	'inputType' => 'text',
-	'eval'      => ['maxlength' => 128, 'tl_class' => 'w50 clr'],
+	'label'         => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_betreff'],
+	'inputType'     => 'text',
+	'eval'          => ['maxlength' => 128, 'tl_class' => 'w50 clr'],
+	'save_callback' => [['tl_settings_counter', 'entschluesseln']],
 ];
 
 /**
@@ -159,16 +161,18 @@ foreach (['page', 'article', 'news'] as $art)
 {
 	// Empfänger dieser Statistik, mehrere durch Komma oder Zeilenumbruch getrennt
 	$GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_empfaenger_'.$art] = [
-		'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_empfaenger_'.$art],
-		'inputType' => 'textarea',
-		'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'w50 clr'],
+		'label'         => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_empfaenger_'.$art],
+		'inputType'     => 'textarea',
+		'eval'          => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'w50 clr'],
+		'save_callback' => [['tl_settings_counter', 'entschluesseln']],
 	];
 
 	// Empfänger in Kopie
 	$GLOBALS['TL_DCA']['tl_settings']['fields']['counter_mail_kopie_'.$art] = [
-		'label'     => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_kopie_'.$art],
-		'inputType' => 'textarea',
-		'eval'      => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'w50'],
+		'label'         => &$GLOBALS['TL_LANG']['tl_settings']['counter_mail_kopie_'.$art],
+		'inputType'     => 'textarea',
+		'eval'          => ['style' => 'height:60px', 'decodeEntities' => true, 'tl_class' => 'w50'],
+		'save_callback' => [['tl_settings_counter', 'entschluesseln']],
 	];
 }
 
@@ -194,5 +198,28 @@ class tl_settings_counter extends Backend
 	public function getMailTemplates(): array
 	{
 		return $this->getTemplateGroup('counter_mail_');
+	}
+
+	/**
+	 * Macht HTML-Entities vor dem Speichern wieder zu Klartext.
+	 *
+	 * Contaos Input::post() ruft stripTags() auf, und zwar unabhängig von der
+	 * Feldeinstellung decodeEntities. Die spitze Klammer in
+	 * „Name <adresse@example.org>“ sieht für stripTags wie ein unbekanntes
+	 * Tag aus und wird zu „&lt;“, während die schließende Klammer stehen
+	 * bleibt. Gespeichert stünde dort „Name &lt;adresse@example.org>“ — für
+	 * den Mailversand unbrauchbar und im Eingabefeld unschön anzusehen.
+	 *
+	 * Der Rückweg über preserveTags wäre die Alternative, würde aber
+	 * ungefiltertes HTML in die Einstellung lassen. Hier genügt es, die
+	 * Entities beim Speichern aufzulösen.
+	 *
+	 * @param mixed $wert Wert, wie ihn das Widget geliefert hat
+	 *
+	 * @return string Derselbe Wert als Klartext
+	 */
+	public function entschluesseln($wert): string
+	{
+		return html_entity_decode((string) $wert, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 	}
 }

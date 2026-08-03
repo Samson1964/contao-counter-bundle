@@ -1,5 +1,30 @@
 # Counter Changelog
 
+## Version 2.3.1 (2026-08-03)
+
+* Fix: **Es gingen überhaupt keine Statistik-Mails mehr hinaus.** Zwei Fehler
+  trafen zusammen:
+  1. Contao speichert die Empfängeradressen mit HTML-Entities. `Input::post()`
+     ruft `stripTags()` auf — und zwar unabhängig von der Feldeinstellung
+     `decodeEntities`. Die öffnende spitze Klammer in
+     „Name &lt;adresse@example.org&gt;“ sieht für `stripTags` wie ein unbekanntes
+     Tag aus und wird zu `&amp;lt;`, während die schließende Klammer stehen bleibt.
+     Für Symfony ist das keine gültige Adresse.
+  2. Der Aufruf von `sendCc()` stand außerhalb der Fehlerbehandlung. Die dabei
+     geworfene Ausnahme riss deshalb den gesamten Cronjob mit — auch die Mails,
+     die danach noch hinausgegangen wären.
+* Fix: Empfängeradressen werden beim Lesen von HTML-Entities befreit. Damit
+  laufen **bereits gespeicherte** Adressen wieder, ohne dass sie neu eingetragen
+  werden müssen
+* Fix: Unbrauchbare Adressen werden übergangen statt den Versand abzubrechen.
+  Sie erscheinen mit Klartext im Systemprotokoll, damit der Tippfehler auffällt
+* Add: `save_callback` auf den acht Textfeldern der Mail-Einstellungen, damit
+  neue Eingaben gar nicht erst mit Entities gespeichert werden
+* Fix: Absendername und Betreffzusatz werden ebenfalls entschlüsselt —
+  „Schach &amp;amp; Co.“ stand sonst so im Postfach
+* Fix: Die Bestätigung nach dem Versand von Hand maskiert die Adressen; die
+  spitzen Klammern zerlegten sonst das Markup der Meldung
+
 ## Version 2.3.0 (2026-08-01)
 
 Diese Fassung ändert nichts am Verhalten. Sie belegt die Lauffähigkeit und
