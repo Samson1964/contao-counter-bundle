@@ -46,7 +46,7 @@ use Schachbulle\ContaoCounterBundle\Helper\Protokoll;
  * @phpstan-import-type Zeile from Bestenliste
  * @phpstan-import-type Ergebnis from Bestenliste
  *
- * @phpstan-type Zeitraum array{bezeichnung: string, pfade: list<Pfad>}
+ * @phpstan-type Zeitraum array{bezeichnung: string, pfade: list<Pfad>, seit: int}
  * @phpstan-type GefaerbteZeile array{platz: int, hits: int, id: int, titel: string, zusatz: string, tstamp: int, datum: string, css: string, farbe: string}
  */
 final class Statistikmail
@@ -124,13 +124,44 @@ final class Statistikmail
 			return;
 		}
 
+		// Läuft der Cronjob über die Weboberfläche, gilt das PHP-Zeitlimit des
+		// Webservers. Die Antwort ist zu diesem Zeitpunkt längst hinausgegangen
+		// (Contao stößt die Cronjobs beim kernel.terminate an), es wartet also
+		// niemand. Wo der Hoster es zulässt, nehmen wir uns deshalb die Zeit.
+		if (\function_exists('set_time_limit'))
+		{
+			@set_time_limit(0);
+		}
+
+		$begonnen = microtime(true);
+		$bericht = [];
+
 		foreach ($this->zeitraeume() as $zeitraum)
 		{
 			foreach ($verteiler as $quelle => $adressen)
 			{
-				$this->versende($quelle, $zeitraum, $adressen['an'], $adressen['kopie']);
+				$dauer = microtime(true);
+				$verschickt = $this->versende($quelle, $zeitraum, $adressen['an'], $adressen['kopie']);
+
+				$bericht[] = sprintf(
+					'%s %s: %s (%01.1f s)',
+					Inhalte::eigenschaft($quelle, 'name'),
+					$zeitraum['bezeichnung'],
+					$verschickt,
+					microtime(true) - $dauer
+				);
 			}
 		}
+
+		// Contao selbst schreibt für einen durchgelaufenen Cronjob nichts ins
+		// Systemprotokoll. Ohne diese Meldung wäre nicht zu unterscheiden, ob
+		// eine fehlende E-Mail an leeren Zahlen lag oder daran, dass der Lauf
+		// vorzeitig abgebrochen wurde
+		Protokoll::cron(
+			sprintf('Counter: Statistik-Mails abgearbeitet in %01.1f s — ', microtime(true) - $begonnen)
+			.implode('; ', $bericht),
+			__METHOD__
+		);
 	}
 
 	/**
@@ -182,6 +213,7 @@ final class Statistikmail
 			$zeitraeume[] = [
 				'bezeichnung' => self::MONATE[(int) date('n', $vormonat)].' '.date('Y', $vormonat),
 				'pfade'       => [[(int) date('Y', $vormonat), (int) date('n', $vormonat), 'all']],
+				'seit'        => (int) mktime(0, 0, 0, (int) date('n', $vormonat), 1, (int) date('Y', $vormonat)),
 			];
 		}
 
@@ -199,6 +231,7 @@ final class Statistikmail
 			$zeitraeume[] = [
 				'bezeichnung' => date('d.m.Y', $montag).' bis '.date('d.m.Y', strtotime('+6 days', $montag)),
 				'pfade'       => $pfade,
+				'seit'        => (int) strtotime('midnight', $montag),
 			];
 		}
 
@@ -207,6 +240,7 @@ final class Statistikmail
 		$zeitraeume[] = [
 			'bezeichnung' => date('d.m.Y', $gestern),
 			'pfade'       => [self::tagespfad($gestern)],
+			'seit'        => (int) strtotime('midnight', $gestern),
 		];
 
 		return $zeitraeume;
@@ -241,14 +275,22 @@ final class Statistikmail
 	 * @phpstan-param list<string> $empfaenger
 	 * @phpstan-param list<string> $kopie
 	 *
-	 * @return void
+	 * @return string Kurzbericht für das Systemprotokoll: entweder die Zahl der
+	 *                Empfänger oder der Grund, weshalb nichts hinausging
 	 */
-	private function versende(string $quelle, array $zeitraum, array $empfaenger, array $kopie = []): void
+	private function versende(string $quelle, array $zeitraum, array $empfaenger, array $kopie = []): string
 	{
 		$anzahl = (int) (Config::get('counter_mail_anzahl') ?: 50);
-		$ergebnis = Bestenliste::auswerten($quelle, $zeitraum['pfade'], $anzahl);
+		$ergebnis = Bestenliste::auswerten($quelle, $zeitraum['pfade'], $anzahl, [], $zeitraum['seit']);
 
-		self::versendeErgebnis($quelle, $zeitraum['bezeichnung'], $ergebnis, $anzahl, $empfaenger, $kopie);
+		$fehler = self::versendeErgebnis($quelle, $zeitraum['bezeichnung'], $ergebnis, $anzahl, $empfaenger, $kopie);
+
+		if ('' !== $fehler)
+		{
+			return $fehler;
+		}
+
+		return sprintf('an %d Empfänger', \count($empfaenger) + \count($kopie));
 	}
 
 	/**

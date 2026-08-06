@@ -96,11 +96,15 @@ Voraussetzung ist ein eingerichteter Contao-Cronjob (Contao-Manager oder ein Auf
 `contao:cron` durch den Hoster).
 
 Die Zeiträume werden dabei **vom seltensten zum häufigsten** abgearbeitet: erst der Vormonat,
-dann die Vorwoche, zuletzt der Vortag. Jeder Zeitraum kostet einen Durchlauf durch die gesamte
-Zählertabelle; schneidet ein PHP-Zeitlimit den Lauf ab, fällt so die Tagesstatistik aus — die
-morgen wiederkommt — statt der Monatsstatistik, die dann für immer fehlte. Wer ganz sicher
-gehen will, ruft `contao:cron` über die Konsole auf; dort gibt es kein Zeitlimit. Und was
-trotzdem einmal liegen bleibt, lässt sich über den Versandknopf in der Statistik nachholen.
+dann die Vorwoche, zuletzt der Vortag. Schneidet ein PHP-Zeitlimit den Lauf ab, fällt so die
+Tagesstatistik aus — die morgen wiederkommt — statt der Monatsstatistik, die dann für immer
+fehlte. Was trotzdem einmal liegen bleibt, lässt sich über den Versandknopf in der Statistik
+nachholen.
+
+**Der Cronjob vermerkt jeden Lauf im Systemprotokoll** (System → Systemprotokoll,
+Kategorie CRON) mit den verschickten Statistiken, der Zahl der Empfänger und der jeweiligen
+Laufzeit. Fehlt dieser Eintrag, wurde der Lauf vorzeitig abgeschnitten — dann hilft ein Aufruf
+von `contao:cron` über die Konsole, wo kein Zeitlimit gilt.
 
 ## Weitere Einstellungen
 

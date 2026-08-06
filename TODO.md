@@ -2,15 +2,21 @@
 
 ## Offene Aufgaben
 
-* Der nächtliche Cronjob rechnet jeden Zeitraum neu aus und kann bei großen
-  Beständen an ein PHP-Zeitlimit stoßen. Entschärft ist das bisher durch die
-  Reihenfolge (Monat vor Woche vor Tag, damit ein Abbruch die Tagesstatistik
-  trifft statt der Monatsstatistik) und durch den Versand von Hand. Sollte es
-  wieder klemmen, wäre der nächste Schritt, die Auswertungen des Cronjobs
-  ebenfalls zwischenzuspeichern oder ihn über die Konsole (`contao:cron`) statt
-  über die Weboberfläche laufen zu lassen — dort gibt es kein Zeitlimit.
+* Nach dem Einspielen von 2.4.0 beobachten, ob die Nachrichtenstatistik wieder
+  zuverlässig kommt. Der Eintrag im Systemprotokoll (Kategorie CRON) nennt
+  jetzt die Laufzeit je Statistik — wenn dort nichts steht, wurde der Lauf
+  vorzeitig abgeschnitten, und der nächste Schritt wäre, `contao:cron` über die
+  Konsole statt über die Weboberfläche laufen zu lassen (dort gibt es kein
+  Zeitlimit).
 
 ## Erledigte Aufgaben
+
+* **2026-08-06, Fassung 2.4.0**
+  * Nachrichtenstatistik blieb nachts aus: Die Auswertung entpackte jeden
+    jemals angelegten Zähler statt nur der im Zeitraum benutzten. Gemessen
+    an 4060 Zählern 2,87 s → 0,03 s.
+  * Der Cronjob vermerkt seinen Lauf jetzt in tl_log (Kategorie CRON) —
+    vorher hinterließ ein abgebrochener Lauf keinerlei Spur.
 
 * **2026-08-01, Fassung 2.3.0**
   * Kompatibilität mit PHP 8.3 und Contao 4.13/5.7 nachgewiesen: alle

@@ -343,7 +343,8 @@ abstract class Statistik
 			$this->quelle(),
 			$this->pfade($ebene, $jahr, $monat, $tag),
 			Inhalte::anzahl($this->quelle()),
-			$this->achse($ebene, $jahr, $monat, $tag)
+			$this->achse($ebene, $jahr, $monat, $tag),
+			$this->beginn($ebene, $jahr, $monat, $tag)
 		);
 
 		if (null !== $cache)
@@ -417,6 +418,34 @@ abstract class Statistik
 		}
 
 		return [[$jahr, $monat, $tag, 'all']];
+	}
+
+	/**
+	 * Liefert den Zeitstempel, an dem der ausgewertete Zeitraum beginnt.
+	 *
+	 * Helper\Bestenliste überspringt damit alle Zähler, die seither nicht
+	 * mehr angefasst wurden — die können im Zeitraum nichts gezählt haben.
+	 *
+	 * @param string $ebene jahr, monat oder tag
+	 * @param int    $jahr  Jahr, vierstellig
+	 * @param int    $monat Monat 1-12
+	 * @param int    $tag   Tag 1-31
+	 *
+	 * @return int Zeitstempel des ersten Augenblicks im Zeitraum
+	 */
+	protected function beginn(string $ebene, int $jahr, int $monat, int $tag): int
+	{
+		if ('jahr' === $ebene)
+		{
+			return (int) mktime(0, 0, 0, 1, 1, $jahr);
+		}
+
+		if ('monat' === $ebene)
+		{
+			return (int) mktime(0, 0, 0, $monat, 1, $jahr);
+		}
+
+		return (int) mktime(0, 0, 0, $monat, $tag, $jahr);
 	}
 
 	/**

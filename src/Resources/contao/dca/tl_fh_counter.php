@@ -24,6 +24,10 @@ $GLOBALS['TL_DCA']['tl_fh_counter'] = [
 				// gab es zwei Einzelindizes, die MySQL zusammenführen musste;
 				// jetzt findet die Abfrage den Datensatz mit einem Zugriff
 				'source,pid' => 'index',
+				// Für die Auswertung: Sie holt je Quelle nur die Zähler, die im
+				// ausgewerteten Zeitraum überhaupt angefasst wurden. Ohne diesen
+				// Index läse MySQL dafür weiterhin die ganze Tabelle
+				'source,tstamp' => 'index',
 			],
 		],
 	],

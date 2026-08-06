@@ -52,6 +52,10 @@ final class Bestenliste
 	 *                        ['titel' => Beschriftung, 'pfad' => Pfad]. Die
 	 *                        Werte werden über ALLE Inhalte addiert, nicht nur
 	 *                        über die der Rangliste
+	 * @param int    $seit    Zeitstempel des Zeitraumbeginns. Zähler, die
+	 *                        seitdem nicht mehr angefasst wurden, werden gar
+	 *                        nicht erst geladen — siehe Begründung im Rumpf.
+	 *                        null wertet alle Zähler aus
 	 *
 	 * @phpstan-param list<Pfad>        $pfade
 	 * @phpstan-param list<Achsenpunkt> $verlauf
@@ -63,13 +67,32 @@ final class Bestenliste
 	 *
 	 * @phpstan-return Ergebnis
 	 */
-	public static function auswerten(string $quelle, array $pfade, int $anzahl, array $verlauf = []): array
+	public static function auswerten(string $quelle, array $pfade, int $anzahl, array $verlauf = [], ?int $seit = null): array
 	{
 		// Nur die beiden gebrauchten Spalten holen. Ein SELECT * zöge hier
 		// zusätzlich die Online- und IP-Listen aller Zähler heran
-		$zaehler = Database::getInstance()
-			->prepare('SELECT pid, counter FROM tl_fh_counter WHERE source=? AND counter IS NOT NULL')
-			->execute($quelle);
+		$sql = 'SELECT pid, counter FROM tl_fh_counter WHERE source=? AND counter IS NOT NULL';
+		$parameter = [$quelle];
+
+		// Zähler ausschließen, die im Zeitraum gar nicht angefasst wurden.
+		//
+		// tstamp ist der letzte Schreibzugriff, und geschrieben wird bei jedem
+		// Besuch. Ein Zähler mit Zugriffen im Zeitraum muss also während des
+		// Zeitraums geschrieben worden sein — sein tstamp liegt damit
+		// zwangsläufig am Anfang des Zeitraums oder danach. Wer davor
+		// stehengeblieben ist, kann im Zeitraum nichts gezählt haben.
+		//
+		// Das spart auf einer gewachsenen Website den Löwenanteil der Arbeit:
+		// Für die Tagesstatistik bleiben nur die Inhalte übrig, die gestern
+		// tatsächlich aufgerufen wurden, statt aller jemals gezählten. Genau
+		// daran lief die Nachrichtenstatistik in ein PHP-Zeitlimit.
+		if (null !== $seit)
+		{
+			$sql .= ' AND tstamp >= ?';
+			$parameter[] = $seit;
+		}
+
+		$zaehler = Database::getInstance()->prepare($sql)->execute(...$parameter);
 
 		$treffer = [];
 		$gesamt = 0;

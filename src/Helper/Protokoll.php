@@ -62,4 +62,44 @@ final class Protokoll
 			['contao' => new ContaoContext($methode, ContaoContext::ERROR)]
 		);
 	}
+
+	/**
+	 * Vermerkt eine Meldung des Cronjobs im Systemprotokoll (Kategorie CRON).
+	 *
+	 * Contao selbst schreibt für einen normal durchgelaufenen Cronjob nichts
+	 * ins Protokoll — `Cron::run()` meldet den Start nur auf der Debug-Stufe,
+	 * und die landet nicht in tl_log. Wenn ein PHP-Zeitlimit den Lauf
+	 * mittendrin abschneidet, bleibt deshalb überhaupt keine Spur zurück: Man
+	 * sieht nur, dass eine E-Mail fehlt, und weiß nicht warum.
+	 *
+	 * Darum meldet der Zähler selbst, was er verschickt hat und wie lange er
+	 * dafür gebraucht hat. Im Backend steht das unter System ->
+	 * Systemprotokoll, Kategorie CRON.
+	 *
+	 * @param string $nachricht Klartext der Meldung
+	 * @param string $methode   Auslösende Methode, üblicherweise __METHOD__
+	 *
+	 * @return void
+	 */
+	public static function cron(string $nachricht, string $methode): void
+	{
+		$container = System::getContainer();
+
+		if (null === $container || !$container->has('monolog.logger.contao.cron'))
+		{
+			return;
+		}
+
+		$logger = $container->get('monolog.logger.contao.cron');
+
+		if (!$logger instanceof LoggerInterface)
+		{
+			return;
+		}
+
+		$logger->info(
+			$nachricht,
+			['contao' => new ContaoContext($methode, ContaoContext::CRON)]
+		);
+	}
 }

@@ -1,5 +1,30 @@
 # Counter Changelog
 
+## Version 2.4.0 (2026-08-06)
+
+**Nach dem Einspielen ist ein Datenbankabgleich nötig** (`contao:migrate`), es
+kommt ein Index hinzu.
+
+* Fix: **Die Auswertung entpackte jeden jemals angelegten Zähler**, auch die
+  Inhalte, die im ausgewerteten Zeitraum gar nicht aufgerufen wurden. Auf einer
+  gewachsenen Website ist das die mit Abstand teuerste Stelle — bei den
+  Nachrichten reichte es aus, um den nächtlichen Cronjob in ein PHP-Zeitlimit
+  laufen zu lassen. Die Abfrage überspringt jetzt alle Zähler, deren letzter
+  Schreibzugriff vor dem Zeitraum liegt: Wer im Zeitraum etwas gezählt hat,
+  muss darin auch geschrieben worden sein. Gemessen an 4060 Zählern:
+  **2,87 s auf 0,03 s**, bei identischem Ergebnis
+* Add: Neuer Index `source,tstamp` auf `tl_fh_counter` für ebendiese Abfrage
+* Add: **Der Cronjob vermerkt seinen Lauf im Systemprotokoll** (System &rarr;
+  Systemprotokoll, Kategorie CRON) — mit jeder verschickten Statistik, der Zahl
+  der Empfänger und der jeweiligen Laufzeit. Contao selbst meldet einen
+  durchgelaufenen Cronjob nur auf der Debug-Stufe, die nicht in `tl_log` landet;
+  ein abgebrochener Lauf hinterließ deshalb bisher überhaupt keine Spur
+* Change: Der Cronjob hebt das PHP-Zeitlimit auf, sofern der Hoster es zulässt.
+  Contao stößt die Cronjobs beim `kernel.terminate` an — die Antwort ist da
+  längst hinausgegangen, es wartet also niemand
+* Change: Auch die Backend-Statistik nutzt den neuen Filter und öffnet sich
+  dadurch spürbar schneller
+
 ## Version 2.3.1 (2026-08-03)
 
 * Fix: **Es gingen überhaupt keine Statistik-Mails mehr hinaus.** Zwei Fehler
