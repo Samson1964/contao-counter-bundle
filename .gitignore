@@ -1,1 +1,4 @@
 .git
+
+# Eigene Arbeitsnotizen, gehören nicht ins Paket
+/TODO.md
