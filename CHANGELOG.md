@@ -1,5 +1,20 @@
 # Counter Changelog
 
+## Version 2.4.2 (2026-08-30)
+
+* Fix: **Die Auswertung konnte den Speicher sprengen.** Contaos
+  `Database\Result` hält jede gelesene Zeile dauerhaft fest — `preload()`
+  hängt sie an `$resultSet` an und gibt sie nie wieder frei. Beim Durchlaufen
+  der Zählertabelle lagen damit sämtliche `counter`-Blöcke gleichzeitig im
+  Arbeitsspeicher. Gemessen an 400 Nachrichten mit zwölf Jahren stündlicher
+  Historie: **426 MB statt jetzt unter 0,1 MB**, bei identischem Ergebnis.
+  Die Abfrage läuft nun über Doctrine, das die Zeilen einzeln nachliefert
+* Warum das so schwer zu finden war: Ein überschrittenes `memory_limit` ist ein
+  PHP-Fatal. Es steht in **keinem** Symfony-Protokoll, und ein Cronjob gilt
+  trotzdem als erledigt. Im Backend äußerte es sich als sporadischer 500er beim
+  Öffnen der Statistik, der nach einem Neuladen verschwand — dann kamen die
+  Zahlen aus dem Zwischenspeicher und der teure Durchlauf entfiel
+
 ## Version 2.4.1 (2026-08-30)
 
 Diese Fassung behebt keinen bekannten Versandfehler — sie sorgt dafür, dass ein

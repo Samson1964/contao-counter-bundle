@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Schachbulle\ContaoCounterBundle\Helper;
 
-use Contao\Database;
 use Contao\StringUtil;
+use Contao\System;
 
 /**
  * Wertet die Zählertabelle für einen Zeitraum aus.
@@ -84,23 +84,34 @@ final class Bestenliste
 		//
 		// Das spart auf einer gewachsenen Website den Löwenanteil der Arbeit:
 		// Für die Tagesstatistik bleiben nur die Inhalte übrig, die gestern
-		// tatsächlich aufgerufen wurden, statt aller jemals gezählten. Genau
-		// daran lief die Nachrichtenstatistik in ein PHP-Zeitlimit.
+		// tatsächlich aufgerufen wurden, statt aller jemals gezählten.
 		if (null !== $seit)
 		{
 			$sql .= ' AND tstamp >= ?';
 			$parameter[] = $seit;
 		}
 
-		$zaehler = Database::getInstance()->prepare($sql)->execute(...$parameter);
+		// Bewusst über Doctrine statt über Contao\Database.
+		//
+		// Contaos Database\Result hält JEDE gelesene Zeile dauerhaft fest
+		// (Result::preload hängt sie an $resultSet an und gibt sie nie frei).
+		// Beim Durchlaufen der Zählertabelle lägen damit sämtliche
+		// counter-Blöcke gleichzeitig im Speicher — bei einer Website mit
+		// jahrelanger Nachrichtenhistorie schnell mehrere hundert Megabyte.
+		// Ein überschrittenes memory_limit ist ein PHP-Fatal: Es steht in
+		// keinem Symfony-Protokoll, und ein Cronjob gilt trotzdem als
+		// erledigt. Doctrine liefert die Zeilen dagegen einzeln nach, sodass
+		// immer nur ein Zähler auf einmal im Speicher liegt.
+		$verbindung = System::getContainer()->get('database_connection');
+		$ergebnis = $verbindung->executeQuery($sql, $parameter);
 
 		$treffer = [];
 		$gesamt = 0;
 		$summen = array_fill(0, \count($verlauf), 0);
 
-		while ($zaehler->next())
+		while (false !== ($zeile = $ergebnis->fetchAssociative()))
 		{
-			$counter = StringUtil::deserialize($zaehler->counter, true);
+			$counter = StringUtil::deserialize($zeile['counter'], true);
 
 			if (!$counter)
 			{
@@ -116,7 +127,7 @@ final class Bestenliste
 
 			if ($hits > 0)
 			{
-				$treffer[(int) $zaehler->pid] = $hits;
+				$treffer[(int) $zeile['pid']] = $hits;
 				$gesamt += $hits;
 			}
 
