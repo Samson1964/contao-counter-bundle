@@ -103,8 +103,13 @@ nachholen.
 
 **Der Cronjob vermerkt jeden Lauf im Systemprotokoll** (System → Systemprotokoll,
 Kategorie CRON) mit den verschickten Statistiken, der Zahl der Empfänger und der jeweiligen
-Laufzeit. Fehlt dieser Eintrag, wurde der Lauf vorzeitig abgeschnitten — dann hilft ein Aufruf
-von `contao:cron` über die Konsole, wo kein Zeitlimit gilt.
+Laufzeit — und zwar **in jedem Fall**: auch wenn nichts zu verschicken war, und auch wenn der
+Lauf mittendrin abgebrochen ist. Steht dort „ABGEBROCHEN", nennt ein Eintrag der Kategorie
+ERROR die Ursache.
+
+Fehlt der Eintrag ganz, obwohl der Cronjob als ausgeführt gilt, wurde der Vorgang vom Server
+abgeschnitten (PHP-Zeitlimit oder Speichergrenze) — dann hilft ein Aufruf von `contao:cron`
+über die Konsole, wo kein Zeitlimit gilt.
 
 ## Weitere Einstellungen
 

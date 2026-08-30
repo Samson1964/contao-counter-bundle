@@ -39,8 +39,12 @@ use Schachbulle\ContaoCounterBundle\Helper\Protokoll;
  * alle drei gemeinsam.
  *
  * Alles steht unter System -> Einstellungen im Bereich „Zähler“. Eine
- * Inhaltsart ohne Empfänger wird übersprungen; ohne jeden Empfänger bricht der
- * Cronjob still ab.
+ * Inhaltsart ohne Empfänger wird übersprungen.
+ *
+ * **Jeder Lauf hinterlässt eine Meldung im Systemprotokoll (Kategorie CRON)** —
+ * auch der, bei dem nichts zu tun war, und erst recht der abgebrochene. Sonst
+ * wäre nicht zu erkennen, ob eine fehlende E-Mail an leeren Zahlen lag, an
+ * einer Einstellung oder an einem Fehler mitten im Lauf.
  *
  * @phpstan-import-type Pfad from Bestenliste
  * @phpstan-import-type Zeile from Bestenliste
@@ -89,16 +93,68 @@ final class Statistikmail
 	 * Zeiträume heute fällig sind, und verschickt je Zeitraum und Inhaltsart
 	 * eine E-Mail.
 	 *
-	 * @return void Seiteneffekt: verschickt E-Mails und vermerkt Fehlschläge
-	 *              im Systemprotokoll. Wirft bewusst keine Ausnahme — ein
-	 *              abgebrochener Versand darf die übrigen Cronjobs nicht
-	 *              mitreißen
+	 * Jeder Ausgang wird protokolliert, auch der vorzeitige und der
+	 * abgebrochene — die Begründung steht bei arbeite().
+	 *
+	 * @return void Seiteneffekt: verschickt E-Mails und schreibt ins
+	 *              Systemprotokoll. Wirft bewusst keine Ausnahme — ein
+	 *              abgebrochener Versand darf weder die übrigen Cronjobs
+	 *              mitreißen noch spurlos bleiben
 	 */
 	public function __invoke(): void
 	{
+		$begonnen = microtime(true);
+
+		try
+		{
+			$bericht = $this->arbeite();
+		}
+		catch (\Throwable $e)
+		{
+			// Contao fängt Ausnahmen aus Cronjobs selbst ab (Cron::run) und
+			// meldet sie nur über den Standard-Logger nach var/logs — NICHT
+			// nach tl_log. Den Zeitstempel des Laufs setzt Contao dabei schon
+			// vorher, der Cronjob gilt also trotzdem als erledigt. Im Backend
+			// sieht es dann so aus, als sei er gelaufen und habe nichts getan.
+			// Deshalb hält der Zähler den Abbruch selbst fest.
+			Protokoll::fehler(
+				'Counter: Der Statistikversand ist abgebrochen — '.$e->getMessage()
+				.' ('.$e->getFile().':'.$e->getLine().')',
+				__METHOD__
+			);
+
+			Protokoll::cron(
+				sprintf('Counter: Statistikversand nach %01.1f s ABGEBROCHEN. Die Ursache steht als Fehler im Systemprotokoll.', microtime(true) - $begonnen),
+				__METHOD__
+			);
+
+			return;
+		}
+
+		Protokoll::cron(
+			sprintf('Counter: Statistik-Mails abgearbeitet in %01.1f s — ', microtime(true) - $begonnen)
+			.implode('; ', $bericht),
+			__METHOD__
+		);
+	}
+
+	/**
+	 * Erledigt die eigentliche Arbeit des Cronjobs.
+	 *
+	 * Ausgelagert, damit __invoke() jeden Ausgang protokollieren kann, auch den
+	 * vorzeitigen. Ein stiller Rücksprung ist hier das Schlimmste, was passieren
+	 * kann: Der Cronjob gilt als gelaufen, es kommt keine E-Mail an, und niemand
+	 * kann sehen, woran es lag.
+	 *
+	 * @return array Kurzberichte für das Systemprotokoll, immer mindestens einer
+	 *
+	 * @phpstan-return list<string>
+	 */
+	private function arbeite(): array
+	{
 		if (!Config::get('counter_mail'))
 		{
-			return;
+			return ['Versand ist unter System -> Einstellungen abgeschaltet'];
 		}
 
 		// Empfänger je Inhaltsart einsammeln. Eine Inhaltsart ohne Empfänger
@@ -121,7 +177,7 @@ final class Statistikmail
 
 		if (!$verteiler)
 		{
-			return;
+			return ['zu keiner Inhaltsart ist ein Empfänger hinterlegt'];
 		}
 
 		// Läuft der Cronjob über die Weboberfläche, gilt das PHP-Zeitlimit des
@@ -133,7 +189,6 @@ final class Statistikmail
 			@set_time_limit(0);
 		}
 
-		$begonnen = microtime(true);
 		$bericht = [];
 
 		foreach ($this->zeitraeume() as $zeitraum)
@@ -153,17 +208,8 @@ final class Statistikmail
 			}
 		}
 
-		// Contao selbst schreibt für einen durchgelaufenen Cronjob nichts ins
-		// Systemprotokoll. Ohne diese Meldung wäre nicht zu unterscheiden, ob
-		// eine fehlende E-Mail an leeren Zahlen lag oder daran, dass der Lauf
-		// vorzeitig abgebrochen wurde
-		Protokoll::cron(
-			sprintf('Counter: Statistik-Mails abgearbeitet in %01.1f s — ', microtime(true) - $begonnen)
-			.implode('; ', $bericht),
-			__METHOD__
-		);
+		return $bericht;
 	}
-
 	/**
 	 * Liest eine Einstellung, deren Name auf die Inhaltsart endet.
 	 *

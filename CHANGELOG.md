@@ -1,5 +1,26 @@
 # Counter Changelog
 
+## Version 2.4.1 (2026-08-30)
+
+Diese Fassung behebt keinen bekannten Versandfehler — sie sorgt dafür, dass ein
+solcher Fehler beim nächsten Mal **sichtbar** ist. Anlass: Der Cronjob galt an
+zwei Tagen als ausgeführt, verschickte aber nichts und hinterließ dabei keinerlei
+Spur im Systemprotokoll.
+
+* Fix: **Der Cronjob hinterlässt jetzt in jedem Ausgang eine Meldung** in der
+  Kategorie CRON — auch dann, wenn er nichts zu tun hatte. Bisher sprang er in
+  zwei Fällen still zurück: wenn der Versand unter System &rarr; Einstellungen
+  abgeschaltet war und wenn zu keiner Inhaltsart ein Empfänger hinterlegt ist.
+  Beides sah im Backend genauso aus wie ein Lauf, der abgestürzt ist
+* Fix: **Ein Abbruch mitten im Lauf erscheint jetzt im Systemprotokoll.** Contao
+  fängt Ausnahmen aus Cronjobs selbst ab (`Cron::run`) und meldet sie nur über
+  den Standard-Logger nach `var/logs` — nicht nach `tl_log`. Den Zeitstempel des
+  Laufs setzt Contao dabei schon vorher, der Job gilt also trotzdem als erledigt.
+  Genau daher rührt der Eindruck „wurde ausgeführt, hat aber nichts getan".
+  Der Zähler schreibt den Abbruch nun selbst als Fehler **und** als CRON-Meldung
+* Change: Die eigentliche Arbeit steckt in einer eigenen Methode, damit der
+  Einstiegspunkt jeden Ausgang protokollieren kann
+
 ## Version 2.4.0 (2026-08-06)
 
 **Nach dem Einspielen ist ein Datenbankabgleich nötig** (`contao:migrate`), es
