@@ -22,6 +22,11 @@ use Schachbulle\ContaoCounterBundle\Helper\Auswertung;
  * Gibt die vom Zählermodul ermittelten Werte über ein wählbares Template aus.
  * Das Modul zählt selbst nichts und darf deshalb beliebig oft eingebunden
  * werden — es muss aber im Seitenlayout hinter dem Zählermodul stehen.
+ *
+ * Contao 5.7 führt das Template des Moduls nicht mehr als dokumentierte
+ * Eigenschaft; es ist weiterhin ein magischer Wert von Contao\Module.
+ *
+ * @property FrontendTemplate $Template
  */
 class Frontend extends Module
 {

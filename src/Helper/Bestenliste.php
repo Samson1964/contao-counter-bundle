@@ -13,6 +13,7 @@ namespace Schachbulle\ContaoCounterBundle\Helper;
 
 use Contao\StringUtil;
 use Contao\System;
+use Doctrine\DBAL\Connection;
 
 /**
  * Wertet die Zählertabelle für einen Zeitraum aus.
@@ -56,9 +57,15 @@ final class Bestenliste
 	 *                        seitdem nicht mehr angefasst wurden, werden gar
 	 *                        nicht erst geladen — siehe Begründung im Rumpf.
 	 *                        null wertet alle Zähler aus
+	 * @param array  $nurIds  Beschränkt die Auswertung auf diese Inhalte,
+	 *                        etwa auf die Seiten eines Seitenpfads. Das gilt
+	 *                        für Rangliste, Gesamtsumme UND Verlauf. null
+	 *                        wertet alle Inhalte der Quelle aus, eine leere
+	 *                        Liste ergibt ein leeres Ergebnis
 	 *
 	 * @phpstan-param list<Pfad>        $pfade
 	 * @phpstan-param list<Achsenpunkt> $verlauf
+	 * @phpstan-param list<int>|null    $nurIds
 	 *
 	 * @return array Drei Schlüssel:
 	 *               zeilen  — Rangliste mit platz, hits, id, titel, zusatz, tstamp, datum, css
@@ -67,8 +74,20 @@ final class Bestenliste
 	 *
 	 * @phpstan-return Ergebnis
 	 */
-	public static function auswerten(string $quelle, array $pfade, int $anzahl, array $verlauf = [], ?int $seit = null): array
+	public static function auswerten(string $quelle, array $pfade, int $anzahl, array $verlauf = [], ?int $seit = null, ?array $nurIds = null): array
 	{
+		if ([] === $nurIds)
+		{
+			$achse = [];
+
+			foreach ($verlauf as $punkt)
+			{
+				$achse[] = ['titel' => $punkt['titel'], 'wert' => 0];
+			}
+
+			return ['zeilen' => [], 'gesamt' => 0, 'verlauf' => $achse];
+		}
+
 		// Nur die beiden gebrauchten Spalten holen. Ein SELECT * zöge hier
 		// zusätzlich die Online- und IP-Listen aller Zähler heran
 		$sql = 'SELECT pid, counter FROM tl_fh_counter WHERE source=? AND counter IS NOT NULL';
@@ -91,6 +110,19 @@ final class Bestenliste
 			$parameter[] = $seit;
 		}
 
+		// Die Beschränkung gehört in die Abfrage, nicht hinter sie: Das Teure
+		// ist das Laden und Entpacken der counter-Blöcke, und das soll für
+		// Inhalte außerhalb der Auswahl gar nicht erst anfallen.
+		//
+		// Die IDs stehen als Zahlen direkt in der Abfrage statt als
+		// Platzhalter. Ein ganzer Seitenbaum kann einige tausend Seiten
+		// umfassen, und MySQL erlaubt je Abfrage höchstens 65 535 Platzhalter.
+		// Durch intval() ist das Einsetzen unbedenklich.
+		if (null !== $nurIds)
+		{
+			$sql .= ' AND pid IN ('.implode(',', array_map('intval', $nurIds)).')';
+		}
+
 		// Bewusst über Doctrine statt über Contao\Database.
 		//
 		// Contaos Database\Result hält JEDE gelesene Zeile dauerhaft fest
@@ -103,6 +135,12 @@ final class Bestenliste
 		// erledigt. Doctrine liefert die Zeilen dagegen einzeln nach, sodass
 		// immer nur ein Zähler auf einmal im Speicher liegt.
 		$verbindung = System::getContainer()->get('database_connection');
+
+		if (!$verbindung instanceof Connection)
+		{
+			throw new \RuntimeException('Counter: Die Datenbankverbindung (database_connection) ist nicht verfügbar.');
+		}
+
 		$ergebnis = $verbindung->executeQuery($sql, $parameter);
 
 		$treffer = [];

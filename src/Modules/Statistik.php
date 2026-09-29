@@ -43,9 +43,25 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
  * @phpstan-import-type Ergebnis from Bestenliste
  *
  * @phpstan-type AuswertungMitStand array{zeilen: list<Zeile>, gesamt: int, verlauf: list<Verlaufswert>, cacheDatum: string}
+ * @phpstan-type Seitenpfad array{knoten: int, pfad: non-empty-list<string>, ids: non-empty-list<int>}
  */
 abstract class Statistik
 {
+	/**
+	 * Wert des Adressparameters umfang, der auf den Seitenpfad beschränkt.
+	 * Fehlt der Parameter, wird die komplette Statistik gezeigt
+	 */
+	protected const UMFANG_PFAD = 'pfad';
+
+	/**
+	 * Ob die laufende Ansicht auf den Seitenpfad beschränkt ist.
+	 *
+	 * Wird zu Beginn von Statistik() gesetzt und von url() gelesen, damit
+	 * jeder Link der Ansicht — Zeitraum, Blättern, Versand — die Auswahl
+	 * beibehält, ohne dass jeder Aufrufer sie weiterreichen muss.
+	 */
+	protected bool $nurSeitenpfad = false;
+
 	/**
 	 * Erlaubte Ebenen mit ihrer Beschriftung
 	 */
@@ -81,6 +97,33 @@ abstract class Statistik
 	abstract protected function quelle(): string;
 
 	/**
+	 * Ob sich diese Statistik auf einen Seitenpfad beschränken lässt.
+	 *
+	 * Nur die Seitenstatistik überschreibt das. Artikel und Nachrichten zeigen
+	 * die Umschaltung gar nicht erst an.
+	 *
+	 * @return bool
+	 */
+	protected function kenntSeitenpfad(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Liefert den gerade eingestellten Seitenpfad.
+	 *
+	 * @return array|null Beschreibung des Teilbaums, oder null, wenn diese
+	 *                    Statistik keinen Seitenpfad kennt oder keiner
+	 *                    eingestellt ist
+	 *
+	 * @phpstan-return Seitenpfad|null
+	 */
+	protected function seitenpfad(): ?array
+	{
+		return null;
+	}
+
+	/**
 	 * Baut die komplette Statistikansicht.
 	 *
 	 * Contao ruft diese Methode über den key-Eintrag in $GLOBALS['BE_MOD'] auf,
@@ -90,7 +133,7 @@ abstract class Statistik
 	 */
 	public function Statistik(): string
 	{
-		$ebene = (string) Input::get('ebene');
+		$ebene = self::zeichenkette(Input::get('ebene'));
 
 		if (!isset(self::EBENEN[$ebene]))
 		{
@@ -102,9 +145,24 @@ abstract class Statistik
 		$monat = (int) date('n', $zeitpunkt);
 		$tag = (int) date('j', $zeitpunkt);
 
-		$ergebnis = $this->auswerten($ebene, $jahr, $monat, $tag);
+		// Standard ist die komplette Statistik. Beschränkt wird nur, wenn es
+		// ausdrücklich gewählt ist UND in der Seitenstruktur ein Knoten steht.
+		// Wurde die Auswahl dort inzwischen aufgehoben, fällt die Ansicht still
+		// auf die komplette Statistik zurück, statt ins Leere zu zeigen
+		$seitenpfad = $this->kenntSeitenpfad() ? $this->seitenpfad() : null;
+		$this->nurSeitenpfad = null !== $seitenpfad && self::UMFANG_PFAD === Input::get('umfang');
+
+		$ergebnis = $this->auswerten($ebene, $jahr, $monat, $tag, $this->nurSeitenpfad ? $seitenpfad : null);
 
 		$template = new BackendTemplate('be_counter_statistik');
+
+		$template->nurSeitenpfad = $this->nurSeitenpfad;
+		// Seitentitel maskieren, ohne vorhandene Entities doppelt zu maskieren:
+		// Contao legt „&“ im Titel meist schon als „&amp;“ ab
+		$pfadTitel = $seitenpfad ? array_map(static fn (string $t): string => StringUtil::specialchars($t), $seitenpfad['pfad']) : [];
+		$template->seitenpfadName = $pfadTitel ? (string) end($pfadTitel) : '';
+		$template->seitenpfadText = implode(' › ', $pfadTitel);
+		$template->umfangLinks = $this->kenntSeitenpfad() ? $this->umfangLinks($ebene, $zeitpunkt, null !== $seitenpfad) : [];
 
 		$template->bezeichnung = Inhalte::eigenschaft($this->quelle(), 'name');
 		$template->spalteZusatz = Inhalte::eigenschaft($this->quelle(), 'zusatz');
@@ -185,12 +243,20 @@ abstract class Statistik
 		$quelle = $this->quelle();
 		$zeitraum = $template->zeitraum;
 
+		// Der Zeitraum steht in Betreff und Überschrift der Mail. Eine auf den
+		// Seitenpfad beschränkte Liste muss dort als solche erkennbar sein,
+		// sonst hält der Empfänger sie für die Statistik der ganzen Website
+		if ($this->nurSeitenpfad)
+		{
+			$zeitraum .= ' · Seitenpfad '.$template->seitenpfadName;
+		}
+
 		if ('counter_versand' === Input::post('FORM_SUBMIT'))
 		{
 			// postRaw statt post: In „Name <adresse@example.org>“ würden die
 			// spitzen Klammern sonst zu Entities und die Adresse unbrauchbar
-			$an = Statistikmail::adressen((string) Input::postRaw('empfaenger'));
-			$kopie = Statistikmail::adressen((string) Input::postRaw('kopie'));
+			$an = Statistikmail::adressen(self::zeichenkette(Input::postRaw('empfaenger')));
+			$kopie = Statistikmail::adressen(self::zeichenkette(Input::postRaw('kopie')));
 
 			$fehler = Statistikmail::versendeErgebnis(
 				$quelle,
@@ -216,8 +282,8 @@ abstract class Statistik
 
 			// Bei einem Fehlschlag das Formular mit den Eingaben erneut zeigen
 			$template->versandFormular = [
-				'empfaenger' => (string) Input::postRaw('empfaenger'),
-				'kopie'      => (string) Input::postRaw('kopie'),
+				'empfaenger' => self::zeichenkette(Input::postRaw('empfaenger')),
+				'kopie'      => self::zeichenkette(Input::postRaw('kopie')),
 				'zeitraum'   => $zeitraum,
 			];
 
@@ -244,7 +310,7 @@ abstract class Statistik
 	 */
 	protected function zeitpunkt(): int
 	{
-		$datum = (string) Input::get('datum');
+		$datum = self::zeichenkette(Input::get('datum'));
 
 		if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum))
 		{
@@ -311,15 +377,25 @@ abstract class Statistik
 	 * @param int    $jahr  Jahr, vierstellig
 	 * @param int    $monat Monat 1-12
 	 * @param int    $tag   Tag 1-31
+	 * @param array  $seitenpfad Beschränkung auf einen Teilbaum, oder null
+	 *                           für die komplette Statistik
+	 *
+	 * @phpstan-param Seitenpfad|null $seitenpfad
 	 *
 	 * @return array Schlüssel zeilen, gesamt, verlauf und cacheDatum
 	 *
 	 * @phpstan-return AuswertungMitStand
 	 */
-	protected function auswerten(string $ebene, int $jahr, int $monat, int $tag): array
+	protected function auswerten(string $ebene, int $jahr, int $monat, int $tag, ?array $seitenpfad = null): array
 	{
 		$cache = self::speicher();
-		$schluessel = implode('.', [$this->quelle(), $ebene, $jahr, $monat, $tag, Inhalte::anzahl($this->quelle())]);
+
+		// Beim Seitenpfad gehen die IDs des Teilbaums als Prüfsumme in den
+		// Schlüssel ein, nicht nur der Knoten: Wird eine Seite in den Teilbaum
+		// hinein- oder herausverschoben, ist ein alter Eintrag sonst noch bis
+		// zu einem Tag lang falsch
+		$umfang = null === $seitenpfad ? 'alle' : 'pfad'.$seitenpfad['knoten'].'-'.md5(implode(',', $seitenpfad['ids']));
+		$schluessel = implode('.', [$this->quelle(), $ebene, $jahr, $monat, $tag, Inhalte::anzahl($this->quelle()), $umfang]);
 
 		if (null !== $cache)
 		{
@@ -344,7 +420,8 @@ abstract class Statistik
 			$this->pfade($ebene, $jahr, $monat, $tag),
 			Inhalte::anzahl($this->quelle()),
 			$this->achse($ebene, $jahr, $monat, $tag),
-			$this->beginn($ebene, $jahr, $monat, $tag)
+			$this->beginn($ebene, $jahr, $monat, $tag),
+			null === $seitenpfad ? null : $seitenpfad['ids']
 		);
 
 		if (null !== $cache)
@@ -603,21 +680,82 @@ abstract class Statistik
 	}
 
 	/**
+	 * Baut die beiden Knöpfe zum Umschalten zwischen kompletter Statistik und
+	 * Seitenpfad.
+	 *
+	 * Ist in der Seitenstruktur kein Knoten gewählt, erscheint der Knopf für
+	 * den Seitenpfad trotzdem — gesperrt und mit einem Hinweis, wie er sich
+	 * freischalten lässt. Sonst bliebe die Möglichkeit unentdeckt.
+	 *
+	 * @param string $ebene         Gerade gewählte Ebene, bleibt beim Wechsel erhalten
+	 * @param int    $zeitpunkt     Angezeigter Zeitpunkt, bleibt beim Wechsel erhalten
+	 * @param bool   $hatSeitenpfad Ob in der Seitenstruktur ein Knoten gewählt ist
+	 *
+	 * @return array Liste aus text, url, aktiv und hinweis. Eine leere url
+	 *               bedeutet einen gesperrten Knopf
+	 *
+	 * @phpstan-return list<array{text: string, url: string, aktiv: bool, hinweis: string}>
+	 */
+	protected function umfangLinks(string $ebene, int $zeitpunkt, bool $hatSeitenpfad): array
+	{
+		$bezeichnung = Inhalte::eigenschaft($this->quelle(), 'name');
+
+		return [
+			[
+				'text'    => 'alle '.$bezeichnung,
+				'url'     => $this->url($ebene, $zeitpunkt, false),
+				'aktiv'   => !$this->nurSeitenpfad,
+				'hinweis' => 'Die komplette Statistik aller '.$bezeichnung,
+			],
+			[
+				'text'    => 'nur Seitenpfad',
+				'url'     => $hatSeitenpfad ? $this->url($ebene, $zeitpunkt, true) : '',
+				'aktiv'   => $this->nurSeitenpfad,
+				'hinweis' => $hatSeitenpfad
+					? 'Nur die Seiten des in der Seitenstruktur eingestellten Seitenpfads'
+					: 'In der Seitenstruktur ist kein Seitenpfad eingestellt. Dort auf den Namen einer Seite klicken („Nur diesen Knoten anzeigen“), dann lässt sich die Statistik hier darauf beschränken.',
+			],
+		];
+	}
+
+	/**
 	 * Baut eine Adresse für die Statistikansicht.
 	 *
-	 * @param string $ebene     jahr, monat oder tag
-	 * @param int    $zeitpunkt Anzuzeigender Zeitpunkt
+	 * @param string    $ebene         jahr, monat oder tag
+	 * @param int       $zeitpunkt     Anzuzeigender Zeitpunkt
+	 * @param bool|null $nurSeitenpfad Beschränkung auf den Seitenpfad. null
+	 *                                 übernimmt die Einstellung der laufenden
+	 *                                 Ansicht — der Normalfall für alle Links
+	 *                                 außer den Umschaltknöpfen selbst
 	 *
 	 * @return string Adresse mit maskierten Trennzeichen, direkt für das
 	 *                href-Attribut im Template verwendbar
 	 */
-	protected function url(string $ebene, int $zeitpunkt): string
+	protected function url(string $ebene, int $zeitpunkt, ?bool $nurSeitenpfad = null): string
 	{
 		return 'contao?do='.Inhalte::eigenschaft($this->quelle(), 'modul')
 			.'&amp;key=counter'
 			.'&amp;ebene='.$ebene
 			.'&amp;datum='.date('Y-m-d', $zeitpunkt)
+			.(($nurSeitenpfad ?? $this->nurSeitenpfad) ? '&amp;umfang='.self::UMFANG_PFAD : '')
 			.'&amp;rt='.self::requestToken();
+	}
+
+	/**
+	 * Macht aus einem Anfrageparameter verlässlich eine Zeichenkette.
+	 *
+	 * Input::get() und Input::postRaw() liefern nicht nur Strings: Steht in
+	 * der Adresse etwa ebene[]=tag, kommt ein Array zurück. Ein schlichtes
+	 * (string) davor ergäbe dann „Array“ samt PHP-Warnung. Alles, was kein
+	 * String ist, gilt hier deshalb als nicht angegeben.
+	 *
+	 * @param mixed $wert Rückgabe von Input::get() oder Input::postRaw()
+	 *
+	 * @return string Der Wert, oder ein leerer String bei Array oder null
+	 */
+	private static function zeichenkette($wert): string
+	{
+		return \is_string($wert) ? $wert : '';
 	}
 
 	/**

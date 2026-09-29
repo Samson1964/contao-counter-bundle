@@ -57,6 +57,18 @@ a.fhc-stat-knopf:hover {
 	cursor					: default;
 }
 
+/* Eingestellter Seitenpfad neben den Umfang-Knöpfen. Gedämpft, solange die
+   komplette Statistik gezeigt wird — dann ist er nur ein Angebot */
+.fhc-stat-pfad {
+	margin-left				: 4px;
+	color					: #8a8a8a;
+}
+
+.fhc-stat-pfad.aktiv {
+	color					: #1F618D;
+	font-weight				: bold;
+}
+
 .fhc-stat-navigation {
 	display					: flex;
 	flex-wrap				: wrap;

@@ -56,6 +56,25 @@ Das Diagramm zeigt jeweils die nächstfeinere Einteilung: die 24 Stunden eines T
 eines Monats oder die zwölf Monate eines Jahres. Es entsteht als SVG auf dem Server und
 braucht kein Javascript.
 
+### Seitenstatistik auf einen Seitenpfad beschränken
+
+Die Seitenstatistik zeigt zunächst immer **alle Seiten**. Unter *Umfang* lässt sie sich auf
+**nur Seitenpfad** umschalten: Dann zählen nur noch die Seiten des Teilbaums, der in der
+Seitenstruktur gerade eingestellt ist — die gewählte Seite selbst und alles darunter.
+
+Eingestellt wird der Seitenpfad dort, wo Contao ihn ohnehin führt: In der Seitenstruktur auf den
+Namen einer Seite klicken (*Nur diesen Knoten anzeigen*). Der Pfad erscheint dann oberhalb des
+Seitenbaums und ebenso in der Kopfzeile der Statistik. Ist keiner eingestellt, bleibt der Knopf
+*nur Seitenpfad* ausgegraut; ein Hinweis beim Darüberfahren erklärt, wie er sich freischalten
+lässt. Wird der Seitenpfad in der Seitenstruktur wieder aufgehoben, zeigt die Statistik von selbst
+wieder alle Seiten.
+
+Die Beschränkung gilt für alles, was die Ansicht zeigt: Bestenliste, Gesamtzahl und Diagramm.
+Sie bleibt beim Blättern und beim Wechsel zwischen Tag, Monat und Jahr erhalten. Eine von Hand
+verschickte Statistik trägt den Seitenpfad im Betreff (etwa *Top-100 Seiten 28.09.2026 ·
+Seitenpfad Jugend*), damit sie niemand für die Statistik der ganzen Website hält. Der tägliche
+Cronjob verschickt weiterhin die komplette Statistik.
+
 Der Knopf **per E-Mail versenden** schickt genau den angezeigten Zeitraum an die eingestellten
 Empfänger. Vor dem Abschicken erscheinen die Adressen und lassen sich für diesen einen Versand
 ändern — die dauerhaften Empfänger bleiben davon unberührt. Weil die Auswertung zu diesem

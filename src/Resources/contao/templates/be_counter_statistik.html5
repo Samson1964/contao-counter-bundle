@@ -20,6 +20,22 @@
 				<a href="<?= $l['url'] ?>" class="fhc-stat-knopf<?= $l['aktiv'] ? ' aktiv' : '' ?>"><?= $l['text'] ?></a>
 			<?php endforeach; ?>
 		</div>
+
+		<?php if($this->umfangLinks): ?>
+			<div class="fhc-stat-gruppe">
+				<span class="fhc-stat-titel">Umfang</span>
+				<?php foreach($this->umfangLinks as $l): ?>
+					<?php if($l['url']): ?>
+						<a href="<?= $l['url'] ?>" class="fhc-stat-knopf<?= $l['aktiv'] ? ' aktiv' : '' ?>" title="<?= $l['hinweis'] ?>"><?= $l['text'] ?></a>
+					<?php else: ?>
+						<span class="fhc-stat-knopf gesperrt" aria-disabled="true" title="<?= $l['hinweis'] ?>"><?= $l['text'] ?></span>
+					<?php endif; ?>
+				<?php endforeach; ?>
+				<?php if($this->seitenpfadText): ?>
+					<span class="fhc-stat-pfad<?= $this->nurSeitenpfad ? ' aktiv' : '' ?>" title="In der Seitenstruktur eingestellter Seitenpfad"><?= $this->seitenpfadText ?></span>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
 	</div>
 
 	<div class="fhc-stat-navigation">
@@ -84,7 +100,7 @@
 	<?php if(!$this->hatDaten): ?>
 
 		<p class="tl_info">
-			Für diesen Zeitraum sind keine Zugriffe auf <?= $this->bezeichnung ?> gezählt.
+			Für diesen Zeitraum sind keine Zugriffe auf <?= $this->bezeichnung ?><?php if($this->nurSeitenpfad): ?> im Seitenpfad „<?= $this->seitenpfadName ?>“<?php endif; ?> gezählt.
 			Mit „zurück“ lässt sich ein früherer Zeitraum ansteuern; über die Knöpfe oben
 			wird aus dem Tag ein ganzer Monat oder ein ganzes Jahr.
 		</p>
@@ -93,12 +109,12 @@
 
 		<div class="fhc-stat-kennzahl">
 			<strong><?= number_format($this->gesamt, 0, ',', '.') ?></strong>
-			Zugriffe auf <?= $this->bezeichnung ?> im Zeitraum <?= $this->zeitraum ?>
+			Zugriffe auf <?= $this->bezeichnung ?><?php if($this->nurSeitenpfad): ?> im Seitenpfad „<?= $this->seitenpfadName ?>“<?php endif; ?> im Zeitraum <?= $this->zeitraum ?>
 		</div>
 
 		<?php if($this->diagramm): ?>
 			<div class="fhc-stat-diagramm">
-				<div class="fhc-stat-legende"><span><?= $this->diagrammTitel ?> (alle <?= $this->bezeichnung ?> zusammen)</span></div>
+				<div class="fhc-stat-legende"><span><?= $this->diagrammTitel ?> (alle <?= $this->bezeichnung ?><?= $this->nurSeitenpfad ? ' im Seitenpfad' : '' ?> zusammen)</span></div>
 				<div class="fhc-stat-scroll">
 					<?= $this->diagramm ?>
 				</div>
@@ -131,7 +147,7 @@
 		</div>
 
 		<p class="tl_help">
-			Gezeigt werden die <?= $this->anzahl ?> meistbesuchten <?= $this->bezeichnung ?>;
+			Gezeigt werden die <?= $this->anzahl ?> meistbesuchten <?= $this->bezeichnung ?><?= $this->nurSeitenpfad ? ' des Seitenpfads' : '' ?>;
 			die Anzahl lässt sich unter System &rarr; Einstellungen ändern. Gezählt wird
 			nach IP-Adressen: Wer innerhalb der eingestellten Sperrzeit zurückkehrt, zählt
 			nicht erneut. Die Werte werden zwischengespeichert — der laufende Zeitraum eine

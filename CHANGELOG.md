@@ -1,5 +1,26 @@
 # Counter Changelog
 
+## Version 2.5.0 (2026-09-29)
+
+* Add: **Seitenstatistik auf den eingestellten Seitenpfad beschränken.** Neue
+  Umschaltung *Umfang: alle Seiten / nur Seitenpfad* in der Kopfzeile der
+  Seitenstatistik. Ausgewertet werden dann nur die Seite, die in der
+  Seitenstruktur über *Nur diesen Knoten anzeigen* gewählt ist, und alles
+  darunter — Bestenliste, Gesamtzahl und Diagramm gleichermaßen. Standard bleibt
+  die komplette Statistik. Ohne eingestellten Seitenpfad ist der Knopf gesperrt
+  und erklärt, wie er sich freischalten lässt
+* Add: Eine von Hand verschickte, beschränkte Statistik nennt den Seitenpfad im
+  Betreff und in der Überschrift der Mail. Der Betreff wird dafür jetzt
+  vollständig entschlüsselt, damit ein „&“ im Seitentitel nicht als „&amp;“
+  ankommt
+* Fix: Adressparameter wie `ebene[]=tag` ergaben unter Contao 5 „Array“ samt
+  PHP-Warnung; `Input::get()` und `Input::postRaw()` können dort ein Array
+  liefern. Nicht-Strings gelten jetzt als nicht angegeben
+* Change: Fehlt die Doctrine-Verbindung, bricht die Auswertung mit einer
+  verständlichen Meldung ab statt mit einem Aufruf auf `null`
+* Change: PHPStan Level 8 wieder ohne Beanstandung unter Contao 4.13 **und**
+  5.7 (dort fehlte die `@property`-Angabe für `$Template` des Ausgabemoduls)
+
 ## Version 2.4.2 (2026-08-30)
 
 * Fix: **Die Auswertung konnte den Speicher sprengen.** Contaos

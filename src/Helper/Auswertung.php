@@ -240,7 +240,9 @@ final class Auswertung
 		$debug = [
 			'head' => [
 				'SERVER REQUEST_URI' => $_SERVER['REQUEST_URI'] ?? '',
-				'GET articles'       => Input::get('articles'),
+				// Input::get() liefert bei articles[]=… ein Array; das hätte in der
+				// einzeiligen Debugausgabe nur „Array“ ergeben
+				'GET articles'       => \is_string($artikel = Input::get('articles')) ? $artikel : '',
 			],
 		];
 

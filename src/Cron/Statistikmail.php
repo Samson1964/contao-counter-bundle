@@ -405,7 +405,10 @@ final class Statistikmail
 			$mail = new Email();
 			$mail->from = (string) (Config::get('counter_mail_absender') ?: Config::get('adminEmail'));
 			$mail->fromName = self::text((string) (Config::get('counter_mail_absendername') ?: 'Webstatistik'));
-			$mail->subject = trim(self::text((string) Config::get('counter_mail_betreff')).' '.$titel);
+			// Der ganze Betreff wird entschlüsselt, nicht nur der eingestellte Teil:
+			// Im Zeitraum kann ein Seitentitel stehen (Statistik von Hand, auf einen
+			// Seitenpfad beschränkt), und Contao speichert „&“ darin als „&amp;“
+			$mail->subject = trim(self::text((string) Config::get('counter_mail_betreff').' '.$titel));
 			$mail->html = $template->parse();
 
 			if ($kopie)
