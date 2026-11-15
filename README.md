@@ -121,14 +121,21 @@ fehlte. Was trotzdem einmal liegen bleibt, lässt sich über den Versandknopf in
 nachholen.
 
 **Der Cronjob vermerkt jeden Lauf im Systemprotokoll** (System → Systemprotokoll,
-Kategorie CRON) mit den verschickten Statistiken, der Zahl der Empfänger und der jeweiligen
-Laufzeit — und zwar **in jedem Fall**: auch wenn nichts zu verschicken war, und auch wenn der
+Kategorie CRON) mit den verschickten Statistiken, der Zahl der Empfänger, der jeweiligen
+Laufzeit und der Speicherspitze des Laufs — und zwar **in jedem Fall**: auch wenn nichts zu verschicken war, und auch wenn der
 Lauf mittendrin abgebrochen ist. Steht dort „ABGEBROCHEN", nennt ein Eintrag der Kategorie
 ERROR die Ursache.
 
 Fehlt der Eintrag ganz, obwohl der Cronjob als ausgeführt gilt, wurde der Vorgang vom Server
 abgeschnitten (PHP-Zeitlimit oder Speichergrenze) — dann hilft ein Aufruf von `contao:cron`
 über die Konsole, wo kein Zeitlimit gilt.
+
+Die Auswertung liest die Zählerblöcke einzeln nach, statt alle auf einmal zu laden. Ihr
+Speicherbedarf hängt deshalb nicht von der Größe der Zählertabelle ab (gemessen: rund 13 MB,
+ob 300 oder 900 Zähler). Voraussetzung dafür ist eine InnoDB-Tabelle und der übliche
+PDO-Treiber; liegt `tl_fh_counter` noch in MyISAM, liest die Auswertung in Paketen zu 25 Zählern
+— ebenfalls mit festem Speicherbedarf, aber langsamer. Die Laufzeit wächst dagegen weiter mit der
+Zahl der Zähler, die im Zeitraum aufgerufen wurden.
 
 ## Weitere Einstellungen
 

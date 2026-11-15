@@ -131,8 +131,11 @@ final class Statistikmail
 			return;
 		}
 
+		// Die Speicherspitze steht mit im Protokoll: Läuft der Cronjob irgendwann
+		// wieder still ins memory_limit, zeigt der Verlauf der letzten Einträge,
+		// ob sich das angebahnt hat
 		Protokoll::cron(
-			sprintf('Counter: Statistik-Mails abgearbeitet in %01.1f s — ', microtime(true) - $begonnen)
+			sprintf('Counter: Statistik-Mails abgearbeitet in %01.1f s, Speicherspitze %d MB — ', microtime(true) - $begonnen, (int) round(memory_get_peak_usage() / 1048576))
 			.implode('; ', $bericht),
 			__METHOD__
 		);

@@ -43,6 +43,16 @@ use Doctrine\DBAL\Connection;
 final class Bestenliste
 {
 	/**
+	 * Zahl der counter-Blöcke, die gleichzeitig geladen werden.
+	 *
+	 * Ein Block ist auf einer gewachsenen Website einige hundert Kilobyte
+	 * groß, bei einer jahrelang stündlich besuchten Startseite gut ein
+	 * Megabyte. 25 Blöcke halten den Speicher damit im zweistelligen
+	 * Megabytebereich; mehr bringt bei der Geschwindigkeit nichts Messbares.
+	 */
+	private const PAKET = 25;
+
+	/**
 	 * Baut Rangliste und Verlaufswerte einer Quelle für einen Zeitraum.
 	 *
 	 * @param string $quelle  Tabellenname: tl_page, tl_article oder tl_news
@@ -88,9 +98,8 @@ final class Bestenliste
 			return ['zeilen' => [], 'gesamt' => 0, 'verlauf' => $achse];
 		}
 
-		// Nur die beiden gebrauchten Spalten holen. Ein SELECT * zöge hier
-		// zusätzlich die Online- und IP-Listen aller Zähler heran
-		$sql = 'SELECT pid, counter FROM tl_fh_counter WHERE source=? AND counter IS NOT NULL';
+		// Nur Zähler, die überhaupt einen Zählerblock haben
+		$bedingung = 'source=? AND counter IS NOT NULL';
 		$parameter = [$quelle];
 
 		// Zähler ausschließen, die im Zeitraum gar nicht angefasst wurden.
@@ -101,12 +110,14 @@ final class Bestenliste
 		// zwangsläufig am Anfang des Zeitraums oder danach. Wer davor
 		// stehengeblieben ist, kann im Zeitraum nichts gezählt haben.
 		//
-		// Das spart auf einer gewachsenen Website den Löwenanteil der Arbeit:
-		// Für die Tagesstatistik bleiben nur die Inhalte übrig, die gestern
-		// tatsächlich aufgerufen wurden, statt aller jemals gezählten.
+		// Wie viel das spart, hängt vom Besucherverhalten ab: Werden alte
+		// Inhalte kaum noch aufgerufen, entfällt der Löwenanteil. Auf
+		// schachbund.de rufen Suchmaschinen dagegen fast jede Nachricht täglich
+		// auf (gemessen am 15.11.2026: rund 17 000 von 17 676 Nachrichtenzählern
+		// innerhalb von drei Tagen angefasst) — dort bleibt kaum etwas übrig.
 		if (null !== $seit)
 		{
-			$sql .= ' AND tstamp >= ?';
+			$bedingung .= ' AND tstamp >= ?';
 			$parameter[] = $seit;
 		}
 
@@ -120,34 +131,14 @@ final class Bestenliste
 		// Durch intval() ist das Einsetzen unbedenklich.
 		if (null !== $nurIds)
 		{
-			$sql .= ' AND pid IN ('.implode(',', array_map('intval', $nurIds)).')';
+			$bedingung .= ' AND pid IN ('.implode(',', array_map('intval', $nurIds)).')';
 		}
-
-		// Bewusst über Doctrine statt über Contao\Database.
-		//
-		// Contaos Database\Result hält JEDE gelesene Zeile dauerhaft fest
-		// (Result::preload hängt sie an $resultSet an und gibt sie nie frei).
-		// Beim Durchlaufen der Zählertabelle lägen damit sämtliche
-		// counter-Blöcke gleichzeitig im Speicher — bei einer Website mit
-		// jahrelanger Nachrichtenhistorie schnell mehrere hundert Megabyte.
-		// Ein überschrittenes memory_limit ist ein PHP-Fatal: Es steht in
-		// keinem Symfony-Protokoll, und ein Cronjob gilt trotzdem als
-		// erledigt. Doctrine liefert die Zeilen dagegen einzeln nach, sodass
-		// immer nur ein Zähler auf einmal im Speicher liegt.
-		$verbindung = System::getContainer()->get('database_connection');
-
-		if (!$verbindung instanceof Connection)
-		{
-			throw new \RuntimeException('Counter: Die Datenbankverbindung (database_connection) ist nicht verfügbar.');
-		}
-
-		$ergebnis = $verbindung->executeQuery($sql, $parameter);
 
 		$treffer = [];
 		$gesamt = 0;
 		$summen = array_fill(0, \count($verlauf), 0);
 
-		while (false !== ($zeile = $ergebnis->fetchAssociative()))
+		foreach (self::zaehler($bedingung, $parameter) as $zeile)
 		{
 			$counter = StringUtil::deserialize($zeile['counter'], true);
 
@@ -216,6 +207,158 @@ final class Bestenliste
 		}
 
 		return ['zeilen' => $zeilen, 'gesamt' => $gesamt, 'verlauf' => $achse];
+	}
+
+	/**
+	 * Liefert die Zählerblöcke einer Abfrage, ohne sie alle zugleich zu laden.
+	 *
+	 * Eine gewöhnliche Abfrage über alle Zähler hält den Speicher NICHT klein,
+	 * auch nicht mit fetchAssociative() in einer Schleife: Der PDO-Treiber für
+	 * MySQL puffert die komplette Ergebnismenge, bevor die erste Zeile
+	 * herauskommt. Gemessen am 15.11.2026 an 900 Zählern mit zusammen 663 MB:
+	 * Spitze 678 MB. Version 2.4.2 hatte das übersehen, weil dort der Speicher
+	 * nach dem Aufruf gemessen wurde statt der Spitze.
+	 *
+	 * Ein überschrittenes memory_limit ist ein PHP-Fatal. Er steht in keinem
+	 * Protokoll, der Cronjob gilt trotzdem als erledigt — und weil die
+	 * Nachrichten als Letzte drankommen und den größten Bestand haben, fehlte
+	 * immer genau ihre Mail.
+	 *
+	 * Deshalb zwei Wege, beide mit festem Speicherbedarf:
+	 *
+	 * 1. Ungepuffert, wo es geht: MySQL liefert die Zeilen nach, während PHP
+	 *    sie verarbeitet. Gemessen an denselben 900 Zählern: Spitze 12,9 MB und
+	 *    mit 4,8 s sogar schneller als bisher (8,1 s), weil Übertragung und
+	 *    Entpacken gleichzeitig laufen.
+	 * 2. In Paketen zu PAKET Zählern, wo der ungepufferte Weg nicht in Frage
+	 *    kommt (siehe ungepuffertesPdo()). Spitze 38,5 MB, dafür langsamer
+	 *    (12,7 s), weil jedes Paket eine eigene Abfrage ist.
+	 *
+	 * Solange der Generator läuft, darf über dieselbe Verbindung keine andere
+	 * Abfrage gestellt werden — das ist beim ungepufferten Weg eine Vorgabe von
+	 * MySQL. Der Aufrufer entpackt in der Schleife nur und fragt nichts ab.
+	 *
+	 * @param string $bedingung WHERE-Klausel ohne das Wort WHERE, mit
+	 *                          Platzhaltern für $parameter
+	 * @param array  $parameter Werte für die Platzhalter
+	 *
+	 * @phpstan-param list<int|string> $parameter
+	 *
+	 * @return \Generator Je Zähler ein Array mit pid und counter
+	 *
+	 * @phpstan-return \Generator<int, array<string, mixed>, mixed, void>
+	 */
+	private static function zaehler(string $bedingung, array $parameter): \Generator
+	{
+		// Bewusst über Doctrine statt über Contao\Database: Contaos
+		// Database\Result hält jede gelesene Zeile dauerhaft fest
+		// (Result::preload hängt sie an $resultSet an und gibt sie nie frei)
+		$verbindung = System::getContainer()->get('database_connection');
+
+		if (!$verbindung instanceof Connection)
+		{
+			throw new \RuntimeException('Counter: Die Datenbankverbindung (database_connection) ist nicht verfügbar.');
+		}
+
+		$pdo = self::ungepuffertesPdo($verbindung);
+
+		if (null !== $pdo)
+		{
+			$schalter = self::pufferSchalter();
+			$vorher = $pdo->getAttribute($schalter);
+			$ergebnis = null;
+
+			$pdo->setAttribute($schalter, false);
+
+			try
+			{
+				$ergebnis = $verbindung->executeQuery('SELECT pid, counter FROM tl_fh_counter WHERE '.$bedingung, $parameter);
+
+				while (false !== ($zeile = $ergebnis->fetchAssociative()))
+				{
+					yield $zeile;
+				}
+			}
+			finally
+			{
+				// Auch bei einem Abbruch mittendrin: Restzeilen verwerfen und den
+				// Puffer wieder einschalten, sonst scheitert jede folgende
+				// Abfrage dieser Anfrage an „Commands out of sync“
+				if (null !== $ergebnis)
+				{
+					$ergebnis->free();
+				}
+
+				$pdo->setAttribute($schalter, $vorher);
+			}
+
+			return;
+		}
+
+		// Erst nur die IDs — eine Liste von Zahlen, die MySQL aus dem Index
+		// beantwortet, ohne einen einzigen counter-Block anzufassen
+		$ids = array_map('intval', $verbindung->fetchFirstColumn('SELECT id FROM tl_fh_counter WHERE '.$bedingung, $parameter));
+
+		foreach (array_chunk($ids, self::PAKET) as $paket)
+		{
+			foreach ($verbindung->fetchAllAssociative('SELECT pid, counter FROM tl_fh_counter WHERE id IN ('.implode(',', $paket).')') as $zeile)
+			{
+				yield $zeile;
+			}
+		}
+	}
+
+	/**
+	 * Prüft, ob die Zählerblöcke ungepuffert gelesen werden können.
+	 *
+	 * Drei Voraussetzungen:
+	 *
+	 * - Die Verbindung läuft über PDO. Doctrine kann auch mysqli verwenden;
+	 *   dort gibt es den Schalter nicht.
+	 * - Der PDO-Treiber ist der für MySQL bzw. MariaDB.
+	 * - tl_fh_counter liegt in InnoDB. Eine MyISAM-Tabelle aus alten
+	 *   Installationen sperrt die ganze Tabelle, solange gelesen wird — bei
+	 *   einem ungepufferten Lesevorgang also für die gesamte Auswertung. In
+	 *   dieser Zeit könnte das Frontend keinen einzigen Zugriff zählen und
+	 *   jeder Seitenaufruf bliebe hängen. InnoDB liest dagegen ohne Sperre.
+	 *
+	 * @param Connection $verbindung Doctrine-Verbindung von Contao
+	 *
+	 * @return \PDO|null Die PDO-Verbindung, oder null, wenn eine der
+	 *                   Voraussetzungen fehlt — dann gilt der Paketweg
+	 */
+	private static function ungepuffertesPdo(Connection $verbindung): ?\PDO
+	{
+		// getNativeConnection() gibt es ab Doctrine DBAL 3.3 — so viel verlangt
+		// schon Contao 4.13, eine Prüfung darauf ist deshalb überflüssig
+		$nativ = $verbindung->getNativeConnection();
+
+		if (!$nativ instanceof \PDO || 'mysql' !== $nativ->getAttribute(\PDO::ATTR_DRIVER_NAME))
+		{
+			return null;
+		}
+
+		$engine = $verbindung->fetchOne(
+			"SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tl_fh_counter'"
+		);
+
+		return \is_string($engine) && 'innodb' === strtolower($engine) ? $nativ : null;
+	}
+
+	/**
+	 * Liefert die Nummer des PDO-Attributs für gepufferte MySQL-Abfragen.
+	 *
+	 * Ab PHP 8.4 steht die Konstante an der Klasse Pdo\Mysql; die alte Form
+	 * PDO::MYSQL_ATTR_USE_BUFFERED_QUERY gilt ab PHP 8.5 als veraltet. Beide
+	 * haben denselben Wert, deshalb genügt es, die neue zu bevorzugen.
+	 *
+	 * @return int
+	 */
+	private static function pufferSchalter(): int
+	{
+		$neu = 'Pdo\Mysql::ATTR_USE_BUFFERED_QUERY';
+
+		return \defined($neu) ? (int) \constant($neu) : \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY;
 	}
 
 	/**

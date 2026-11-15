@@ -1,5 +1,34 @@
 # Counter Changelog
 
+## Version 2.5.1 (2026-11-15)
+
+* Fix: **Die Nachrichtenstatistik blieb wieder aus**, und die Backend-Statistik
+  brach beim ersten Aufruf mit einem Fehler 500 ab. Ursache ist dieselbe wie in
+  2.4.2 vermutet — der Speicher —, aber **2.4.2 hatte sie nicht behoben.** Die
+  dort beschriebene Doctrine-Schleife holt die Zeilen zwar einzeln ab, doch der
+  PDO-Treiber für MySQL puffert vorher die **komplette** Ergebnismenge.
+  Nachgemessen mit dem tatsächlichen Spitzenwert: 900 Zähler mit zusammen
+  663 MB brauchten 678 MB. Die damals veröffentlichte Angabe „426 MB statt unter
+  0,1 MB“ war falsch: Gemessen wurde der Speicher nach dem Aufruf, nicht die
+  Spitze während des Aufrufs
+* Fix: Die Zählerblöcke werden jetzt **ungepuffert** gelesen — MySQL liefert
+  nach, während PHP verarbeitet. Gemessen an denselben 900 Zählern:
+  **Spitze 13 MB statt 678 MB**, unabhängig von der Tabellengröße, und mit
+  4,8 s statt 8,1 s zugleich schneller. Unter Contao 5.7 bei 600 Zählern:
+  13 MB statt 457 MB, 3,4 s statt 5,6 s. Ergebnisse identisch
+* Change: Wo der ungepufferte Weg nicht in Frage kommt — anderer
+  Datenbanktreiber oder eine `tl_fh_counter` in MyISAM, die während des Lesens
+  gesperrt wäre —, liest die Auswertung in Paketen zu 25 Zählern. Auch dort ist
+  der Speicherbedarf fest (gemessen 38 MB), die Laufzeit aber höher
+* Change: Die Protokollzeile des Cronjobs nennt jetzt die Speicherspitze des
+  Laufs. Kündigt sich das Problem noch einmal an, ist es dort zu sehen, bevor
+  eine Mail ausbleibt
+* Hintergrund, gemessen am 15.11.2026 auf schachbund.de: Von 17 676
+  Nachrichtenzählern wurden rund 17 000 innerhalb von drei Tagen aufgerufen,
+  fast alle von Suchmaschinen. Der Filter auf den Zeitraum, der in 2.4.0 die
+  Laufzeit gerettet hatte, spart bei Nachrichten deshalb kaum noch etwas. Weil
+  die Nachrichten als Letzte drankommen, traf der Speicherfehler immer genau
+  ihre Mail
 ## Version 2.5.0 (2026-09-29)
 
 * Add: **Seitenstatistik auf den eingestellten Seitenpfad beschränken.** Neue
@@ -29,7 +58,9 @@
   der Zählertabelle lagen damit sämtliche `counter`-Blöcke gleichzeitig im
   Arbeitsspeicher. Gemessen an 400 Nachrichten mit zwölf Jahren stündlicher
   Historie: **426 MB statt jetzt unter 0,1 MB**, bei identischem Ergebnis.
-  Die Abfrage läuft nun über Doctrine, das die Zeilen einzeln nachliefert
+  Die Abfrage läuft nun über Doctrine, das die Zeilen einzeln nachliefert.
+  *Berichtigung (2.5.1): Die Angabe „unter 0,1 MB“ war falsch gemessen, der
+  Speicherfehler bestand fort. Siehe 2.5.1.*
 * Warum das so schwer zu finden war: Ein überschrittenes `memory_limit` ist ein
   PHP-Fatal. Es steht in **keinem** Symfony-Protokoll, und ein Cronjob gilt
   trotzdem als erledigt. Im Backend äußerte es sich als sporadischer 500er beim
